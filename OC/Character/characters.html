@@ -4,203 +4,162 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OC — Lawren103</title>
+  <link rel="icon" type="image/png" href="../../img/favicon.png" />
   <style>
     :root {
-      --bg: #020202;
-      --panel: #0d0d0d;
-      --text: #5ef2ff;
-      --muted: #7aa9b0;
-      --accent: #2fd3e0;
-      --accent2: #1a6e78;
+      --bg: #020202; --panel: #0d0d0d;
+      --text: #5ef2ff; --muted: #7aa9b0;
+      --accent: #2fd3e0; --accent2: #1a6e78;
       --line: #17353a;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
       font-family: Arial, Helvetica, sans-serif;
-      color: var(--text);
-      background: var(--bg);
+      color: var(--text); background: var(--bg);
       overflow-x: hidden;
     }
     a { color: inherit; text-decoration: none; }
-
-    /* Particle canvas */
     #particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+    /* ── 커서 ── */
+    * { cursor: none !important; }
+    #cursor-dot {
+      position: fixed; width: 7px; height: 7px;
+      background: #2fd3e0; border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      box-shadow: 0 0 8px #2fd3e0, 0 0 18px rgba(47,211,224,0.4);
+    }
+    #cursor-ring {
+      position: fixed; width: 28px; height: 28px;
+      border: 1px solid rgba(47,211,224,0.55); border-radius: 50%;
+      pointer-events: none; z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: width 0.2s, height 0.2s, border-color 0.2s;
+    }
 
     .wrap {
       position: relative; z-index: 1;
       width: min(1100px, calc(100% - 40px));
-      margin: 0 auto;
-      padding: 32px 0 40px;
+      margin: 0 auto; padding: 32px 0 40px;
     }
 
-    /* Header */
+    /* ── 헤더 ── */
     .site-header {
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center;
       justify-content: space-between;
       margin-bottom: 28px;
       border-bottom: 1px solid var(--line);
       padding-bottom: 14px;
+      gap: 8px;
     }
     .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 14px;
-      border: 1px solid var(--line);
-      background: linear-gradient(135deg, #0f2f33, #07171a);
-      color: #bdfcff;
-      font-size: 0.85rem;
-      letter-spacing: 0.1em;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border: 1px solid var(--line);
+      background: linear-gradient(135deg,#0f2f33,#07171a);
+      color: #bdfcff; font-size: 0.85rem; letter-spacing: 0.1em;
       transition: border-color .2s, box-shadow .2s, transform .2s;
+      white-space: nowrap;
     }
-    .back-btn:hover {
-      border-color: var(--accent);
-      box-shadow: 0 0 12px rgba(47,211,224,.28);
-      transform: translateY(-1px);
-    }
-    .page-title {
-      font-size: 1.4rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-    .copyright {
-      font-size: 0.78rem;
-      color: var(--muted);
-      letter-spacing: 0.12em;
-    }
+    .back-btn:hover { border-color: var(--accent); box-shadow: 0 0 12px rgba(47,211,224,.28); transform: translateY(-1px); }
+    .page-title { font-size: 1.4rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .copyright { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.12em; white-space: nowrap; }
 
-    /* Layout */
+    /* ── 사이드바 토글 버튼 ── */
+    #sidebarToggle {
+      border: 1px solid var(--line);
+      border-left: none; /* back-btn과 이어 보이도록 */
+      background: linear-gradient(135deg,#0f2f33,#07171a);
+      color: var(--muted); padding: 7px 14px;
+      cursor: pointer; font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+      white-space: nowrap;
+    }
+    #sidebarToggle:hover { border-color: var(--accent); color: #bdfcff; box-shadow: 0 0 10px rgba(47,211,224,.2); }
+
+    /* ── 레이아웃 ── */
     .layout {
       display: grid;
       grid-template-columns: 200px 1fr;
       gap: 16px;
+      transition: grid-template-columns 0.3s ease;
     }
+    .layout.sidebar-hidden { grid-template-columns: 0px 1fr; }
 
-    /* Sidebar */
+    /* ── 사이드바 ── */
     .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      display: flex; flex-direction: column; gap: 16px;
+      overflow: hidden;
+      transition: opacity 0.3s ease;
     }
+    .layout.sidebar-hidden .sidebar { opacity: 0; pointer-events: none; }
     .sidebar-block {
       border: 1px solid var(--line);
-      background: rgba(94,242,255,.03);
-      padding: 14px;
+      background: rgba(94,242,255,.03); padding: 14px;
     }
     .sidebar-label {
-      font-size: 0.78rem;
-      color: var(--muted);
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
+      font-size: 0.78rem; color: var(--muted);
+      letter-spacing: 0.22em; text-transform: uppercase;
       margin-bottom: 10px;
     }
     .char-nav-list { display: grid; gap: 7px; }
     .char-nav-btn {
-      display: block;
-      padding: 8px 10px;
-      border: 1px solid var(--line);
-      background: #0b0b0b;
-      color: var(--text);
-      font-size: 0.88rem;
-      cursor: pointer;
+      display: block; padding: 8px 10px;
+      border: 1px solid var(--line); background: #0b0b0b;
+      color: var(--text); font-size: 0.88rem; cursor: pointer;
+      white-space: nowrap;
       transition: border-color .2s, box-shadow .2s, transform .2s, color .2s;
     }
-    .char-nav-btn.active {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(47,211,224,.18) inset;
-      color: #fff;
-    }
-    .char-nav-btn:hover {
-      border-color: var(--accent);
-      color: #fff;
-      box-shadow: 0 0 10px rgba(47,211,224,.22);
-      transform: translateY(-1px);
-    }
-    .thumb-list {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-    }
+    .char-nav-btn.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(47,211,224,.18) inset; color: #fff; }
+    .char-nav-btn:hover { border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(47,211,224,.22); transform: translateY(-1px); }
+    .thumb-list { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
     .thumb-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      border: 1px solid var(--line);
-      padding: 5px;
-      background: #0b0b0b;
-      color: var(--text);
-      cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      border: 1px solid var(--line); padding: 5px; background: #0b0b0b;
+      color: var(--text); cursor: pointer;
       transition: border-color .2s, box-shadow .2s, transform .2s;
     }
     .thumb-btn.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(47,211,224,.18) inset; }
     .thumb-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
-    .thumb-image {
-      width: 100%;
-      aspect-ratio: 1;
-      background: rgba(94,242,255,.08) center/cover no-repeat;
-      border: 1px solid rgba(94,242,255,.1);
-    }
+    .thumb-image { width: 100%; aspect-ratio: 1; background: rgba(94,242,255,.08) center/cover no-repeat; border: 1px solid rgba(94,242,255,.1); }
     .thumb-label { font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-align: center; }
 
-    /* Viewer */
+    /* ── 뷰어 (기본: 가로 2단) ── */
     .viewer {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      align-items: start;
+      gap: 16px; align-items: start;
     }
     .viewer-frame {
-      border: 1px solid var(--line);
-      background: #090909;
-      min-height: 400px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
+      border: 1px solid var(--line); background: #090909;
+      min-height: 300px; display: flex;
+      align-items: center; justify-content: center; padding: 16px;
     }
     .viewer-frame img { width: 100%; max-height: 480px; object-fit: contain; }
-    .viewer-frame .no-img {
-      color: var(--muted);
-      font-size: 0.85rem;
-      letter-spacing: 0.15em;
-      opacity: .5;
-    }
+    .viewer-frame .no-img { color: var(--muted); font-size: 0.85rem; letter-spacing: 0.15em; opacity: .5; }
     .info-pane {
-      border: 1px solid var(--line);
-      background: rgba(94,242,255,.03);
-      padding: 20px;
-      min-height: 400px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      border: 1px solid var(--line); background: rgba(94,242,255,.03);
+      padding: 20px; min-height: 300px;
+      display: flex; flex-direction: column; gap: 12px;
     }
     .info-pane h2 { font-size: 1.1rem; color: #bdfcff; letter-spacing: 0.06em; }
     .info-pane p { color: var(--muted); line-height: 1.9; white-space: pre-line; font-size: 0.9rem; }
 
-    /* 커스텀 커서 */
-    * { cursor: none !important; }
-    #cursor-dot {
-      position: fixed;
-      width: 7px; height: 7px;
-      background: #2fd3e0;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%, -50%);
-      box-shadow: 0 0 8px #2fd3e0, 0 0 18px rgba(47,211,224,0.4);
-    }
-    #cursor-ring {
-      position: fixed;
-      width: 28px; height: 28px;
-      border: 1px solid rgba(47,211,224,0.55);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 9998;
-      transform: translate(-50%, -50%);
-      transition: width 0.2s, height 0.2s, border-color 0.2s;
+    /* ── 모바일 반응형 ── */
+    @media (max-width: 640px) {
+      .wrap { width: calc(100% - 24px); padding: 20px 0 40px; }
+      .copyright { display: none; }
+      /* 사이드바 기본 닫힘 */
+      .layout { grid-template-columns: 0px 1fr !important; }
+      .sidebar { opacity: 0 !important; pointer-events: none !important; }
+      .layout.mobile-open { grid-template-columns: 160px 1fr !important; }
+      .layout.mobile-open .sidebar { opacity: 1 !important; pointer-events: auto !important; }
+      /* 뷰어: 가로→세로 변경 (이미지 위, 설명 아래) */
+      .viewer { grid-template-columns: 1fr !important; }
+      .viewer-frame { min-height: 200px; }
+      .info-pane { min-height: auto; }
     }
   </style>
   <script src="../../characters.js"></script>
@@ -211,16 +170,16 @@
 <canvas id="particles"></canvas>
 
 <div class="wrap">
-  <!-- Header -->
   <div class="site-header">
-    <a class="back-btn" href="../../index.html">← Back</a>
+    <div style="display:flex;gap:0;align-items:stretch;">
+      <a class="back-btn" href="../../index.html">← Back</a>
+      <button id="sidebarToggle">☰ Nav</button>
+    </div>
     <span class="page-title" id="pageTitle">Characters</span>
     <span class="copyright">© Lawren103 — Commercial Use Prohibited</span>
   </div>
 
-  <!-- Layout -->
-  <div class="layout">
-    <!-- Sidebar -->
+  <div class="layout" id="charLayout">
     <aside class="sidebar">
       <div class="sidebar-block">
         <div class="sidebar-label">Characters</div>
@@ -232,7 +191,6 @@
       </div>
     </aside>
 
-    <!-- Viewer -->
     <div class="viewer">
       <div class="viewer-frame">
         <img id="mainImage" alt="" style="display:none;" />
@@ -247,149 +205,103 @@
 </div>
 
 <script>
-// ── Data는 ../../characters.js 의 CHARACTERS 에서 로드됨 ──
+/* ── 파티클 ── */
+(function(){
+  var c=document.getElementById('particles'),ctx=c.getContext('2d');
+  var W,H,dots=[];
+  function r(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}r();
+  window.addEventListener('resize',r);
+  for(var i=0;i<90;i++)dots.push({x:Math.random()*1920,y:Math.random()*1080,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,r:Math.random()*1.4+.3,a:Math.random()*.55+.1});
+  function draw(){ctx.clearRect(0,0,W,H);dots.forEach(function(d){d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(94,242,255,'+d.a+')';ctx.fill();});requestAnimationFrame(draw);}
+  draw();
+})();
 
-let currentChar = 'Asa';
+/* ── 커서 ── */
+(function(){
+  var dot=document.getElementById('cursor-dot'),ring=document.getElementById('cursor-ring');
+  var mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',function(e){
+    mx=e.clientX;my=e.clientY;
+    dot.style.left=mx+'px';dot.style.top=my+'px';
+    if(e.target.matches('a,button,.char-nav-btn,.thumb-btn')){ring.style.width='44px';ring.style.height='44px';ring.style.borderColor='rgba(47,211,224,0.9)';}
+    else{ring.style.width='28px';ring.style.height='28px';ring.style.borderColor='rgba(47,211,224,0.55)';}
+  });
+  (function moveRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(moveRing);})();
+})();
 
-const charNav    = document.getElementById('charNav');
-const thumbList  = document.getElementById('thumbList');
-const mainImage  = document.getElementById('mainImage');
-const noImg      = document.getElementById('noImg');
-const detailTitle= document.getElementById('detailTitle');
-const detailText = document.getElementById('detailText');
-const pageTitle  = document.getElementById('pageTitle');
+/* ── 사이드바 토글 ── */
+var charLayout=document.getElementById('charLayout');
+var toggleBtn=document.getElementById('sidebarToggle');
+var sidebarOpen=window.innerWidth>640;
+if(!sidebarOpen)charLayout.classList.add('sidebar-hidden');
 
-function loadCharacter(key) {
-  currentChar = key;
-  const ch = CHARACTERS[key];
-  pageTitle.textContent = ch.title;
+toggleBtn.addEventListener('click',function(){
+  var isMobile=window.innerWidth<=640;
+  if(isMobile){
+    charLayout.classList.toggle('mobile-open');
+  } else {
+    sidebarOpen=!sidebarOpen;
+    charLayout.classList.toggle('sidebar-hidden',!sidebarOpen);
+  }
+});
 
-  // update nav active
-  charNav.querySelectorAll('.char-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.key === key));
+/* ── 캐릭터 로드 ── */
+var currentChar='Asa';
+var charNav=document.getElementById('charNav');
+var thumbList=document.getElementById('thumbList');
+var mainImage=document.getElementById('mainImage');
+var noImg=document.getElementById('noImg');
+var detailTitle=document.getElementById('detailTitle');
+var detailText=document.getElementById('detailText');
+var pageTitle=document.getElementById('pageTitle');
 
-  // render thumbs
-  thumbList.innerHTML = '';
-  ch.items.forEach((item, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'thumb-btn' + (i === 0 ? ' active' : '');
-    btn.innerHTML = `<div class="thumb-image" style="background-image:url('${item.thumb||item.image}')"></div><span class="thumb-label">${item.label}</span>`;
-    btn.addEventListener('click', () => selectItem(i));
+function loadCharacter(key){
+  currentChar=key;
+  var ch=CHARACTERS[key];
+  pageTitle.textContent=ch.title;
+  charNav.querySelectorAll('.char-nav-btn').forEach(function(b){b.classList.toggle('active',b.dataset.key===key);});
+  thumbList.innerHTML='';
+  ch.items.forEach(function(item,i){
+    var btn=document.createElement('button');
+    btn.className='thumb-btn'+(i===0?' active':'');
+    btn.innerHTML='<div class="thumb-image" style="background-image:url(\''+( item.thumb||item.image)+'\')" ></div><span class="thumb-label">'+item.label+'</span>';
+    btn.addEventListener('click',function(){selectItem(i);});
     thumbList.appendChild(btn);
   });
   selectItem(0);
 }
 
-function selectItem(index) {
-  const item = CHARACTERS[currentChar].items[index];
-  const src = item.image;
-  mainImage.src = src;
-  mainImage.style.display = src ? 'block' : 'none';
-  noImg.style.display = src ? 'none' : 'block';
-  detailTitle.textContent = item.title;
-  detailText.textContent  = item.text;
-  thumbList.querySelectorAll('.thumb-btn').forEach((b, i) => b.classList.toggle('active', i === index));
+function selectItem(index){
+  var item=CHARACTERS[currentChar].items[index];
+  var src=item.image;
+  mainImage.src=src;
+  mainImage.style.display=src?'block':'none';
+  noImg.style.display=src?'none':'block';
+  detailTitle.textContent=item.title;
+  detailText.textContent=item.text;
+  thumbList.querySelectorAll('.thumb-btn').forEach(function(b,i){b.classList.toggle('active',i===index);});
+  // 모바일: 아이템 선택 후 사이드바 닫기
+  if(window.innerWidth<=640)charLayout.classList.remove('mobile-open');
 }
 
-// Build char nav
-Object.keys(CHARACTERS).forEach(key => {
-  const btn = document.createElement('button');
-  btn.className = 'char-nav-btn';
-  btn.dataset.key = key;
-  btn.textContent = CHARACTERS[key].title;
-  btn.addEventListener('click', () => loadCharacter(key));
+Object.keys(CHARACTERS).forEach(function(key){
+  var btn=document.createElement('button');
+  btn.className='char-nav-btn';
+  btn.dataset.key=key;
+  btn.textContent=CHARACTERS[key].title;
+  btn.addEventListener('click',function(){loadCharacter(key);});
   charNav.appendChild(btn);
 });
 
-// ── URL parameter auto-select ──────────
-// ?char=Asa&item=0 형식으로 진입하면 해당 캐릭터/아이템을 바로 표시
-(function() {
-  var params    = new URLSearchParams(window.location.search);
-  var charParam = params.get('char');
-  var itemParam = parseInt(params.get('item') || '0', 10);
-
-  // CHARACTERS(대문자) — characters.js 에서 로드된 전역 변수
-  var key = (charParam && CHARACTERS[charParam]) ? charParam : Object.keys(CHARACTERS)[0];
-  loadCharacter(key);
-  setTimeout(function() {
-    selectItem(isNaN(itemParam) ? 0 : itemParam);
-  }, 0);
-})();
-
-// ── Particles ────────────────────────────────────────────────────────────────
+/* ── URL 파라미터 ── */
 (function(){
-  const canvas = document.getElementById('particles');
-  const ctx = canvas.getContext('2d');
-  let W, H, dots = [];
-  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-  resize(); window.addEventListener('resize', resize);
-  for(let i=0;i<90;i++) dots.push({
-    x: Math.random()*1920, y: Math.random()*1080,
-    vx:(Math.random()-.5)*.22, vy:(Math.random()-.5)*.22,
-    r: Math.random()*1.4+.3, a: Math.random()*.55+.1
-  });
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    dots.forEach(d=>{
-      d.x+=d.vx; d.y+=d.vy;
-      if(d.x<0)d.x=W; if(d.x>W)d.x=0;
-      if(d.y<0)d.y=H; if(d.y>H)d.y=0;
-      ctx.beginPath();
-      ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
-      ctx.fillStyle=`rgba(47,211,224,${d.a})`;
-      ctx.fill();
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
+  var params=new URLSearchParams(window.location.search);
+  var charParam=params.get('char');
+  var itemParam=parseInt(params.get('item')||'0',10);
+  var key=(charParam&&CHARACTERS[charParam])?charParam:Object.keys(CHARACTERS)[0];
+  loadCharacter(key);
+  setTimeout(function(){selectItem(isNaN(itemParam)?0:itemParam);},0);
 })();
-
-  // 커스텀 커서
-  (function() {
-    var dot  = document.getElementById('cursor-dot');
-    var ring = document.getElementById('cursor-ring');
-    var mx = window.innerWidth/2, my = window.innerHeight/2;
-    var rx = mx, ry = my;
-    var trails = [];
-    for (var i = 0; i < 8; i++) {
-      var t = document.createElement('div');
-      t.style.cssText = 'position:fixed;border-radius:50%;pointer-events:none;z-index:9996;transform:translate(-50%,-50%);';
-      document.body.appendChild(t);
-      trails.push({ el: t, x: mx, y: my });
-    }
-    document.addEventListener('mousemove', function(e) {
-      mx = e.clientX; my = e.clientY;
-      dot.style.left = mx + 'px'; dot.style.top = my + 'px';
-    });
-    document.addEventListener('mouseover', function(e) {
-      if (e.target.matches('a,button,.btn,.char-btn,.item-btn')) {
-        ring.style.width = '44px'; ring.style.height = '44px';
-        ring.style.borderColor = 'rgba(47,211,224,0.9)';
-      }
-    });
-    document.addEventListener('mouseout', function(e) {
-      if (e.target.matches('a,button,.btn,.char-btn,.item-btn')) {
-        ring.style.width = '28px'; ring.style.height = '28px';
-        ring.style.borderColor = 'rgba(47,211,224,0.55)';
-      }
-    });
-    function anim() {
-      rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
-      ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
-      var px = mx, py = my;
-      trails.forEach(function(tr, i) {
-        tr.x += (px - tr.x) * (0.25 - i * 0.02);
-        tr.y += (py - tr.y) * (0.25 - i * 0.02);
-        var size = Math.max(1, 4 - i * 0.4);
-        var alpha = Math.max(0, 0.22 - i * 0.025);
-        tr.el.style.left = tr.x + 'px'; tr.el.style.top = tr.y + 'px';
-        tr.el.style.width = size + 'px'; tr.el.style.height = size + 'px';
-        tr.el.style.background = 'rgba(47,211,224,' + alpha + ')';
-        px = tr.x; py = tr.y;
-      });
-      requestAnimationFrame(anim);
-    }
-    anim();
-  })();
 </script>
 </body>
 </html>
