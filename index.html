@@ -137,7 +137,7 @@
       color: var(--muted); margin-bottom: 8px;
       padding-bottom: 5px; border-bottom: 1px solid var(--line);
     }
-    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; overflow: visible; position: relative; }
     .btn {
       display: inline-block; padding: 9px 18px;
       border: 1px solid var(--line);
@@ -168,11 +168,11 @@
       pointer-events: none;
     }
     @keyframes rippleAnim { to { transform: scale(2.5); opacity: 0; } }
-    .char-popup-wrap { position: relative; display: inline-block; z-index: 10; }
+    .char-popup-wrap { position: relative; display: inline-block; z-index: 200; }
     .char-popup {
       display: none; position: absolute; top: calc(100% + 6px); left: 0;
       background: #060d0e; border: 1px solid var(--line);
-      min-width: 160px; z-index: 9100; padding: 6px 0;
+      min-width: 160px; z-index: 9200; padding: 6px 0;
     }
     .char-popup.open { display: block; }
     .char-popup a {

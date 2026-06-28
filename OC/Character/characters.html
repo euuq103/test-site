@@ -367,7 +367,8 @@ fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(w
   /* 세계관 필터 */
   var filtered = WORLD_PARAM
     ? worlds.filter(function(w){
-        return w.world_name.toLowerCase()===WORLD_PARAM.toLowerCase();
+        var wn = (w.world_name||w.name||'').toLowerCase();
+        return wn===WORLD_PARAM.toLowerCase();
       })
     : worlds;
 
@@ -375,22 +376,24 @@ fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(w
     buildFromData(getLocalChars());
     return;
   }
-  /* API 응답 -> 로컬 포맷 변환 */
+  /* API 응답 -> 로컬 포맷 변환
+     구조: { worldName: { world, title, items:[{label,title,text,image,thumb}] } }
+     캐릭터 여러 명 = items 배열에 모두 담기 */
   var db={};
   filtered.forEach(function(w){
+    var wName = w.world_name || w.name || 'Unknown';
+    var wKey  = 'world_'+wName;
+    if(!db[wKey]){
+      db[wKey]={ world: wKey, title: wName, items:[] };
+    }
     (w.characters||[]).forEach(function(ch){
-      var key='char_'+ch.id;
-      db[key]={
-        world: w.world_name,
+      db[wKey].items.push({
+        label: ch.name,
         title: ch.name,
-        items:[{
-          label: ch.name,
-          title: ch.name,
-          text:  ch.description||'',
-          image: ch.image_url||ch.main_url||'',
-          thumb: ch.thumb_url||ch.image_url||''
-        }]
-      };
+        text:  ch.description||'',
+        image: ch.image_url||ch.main_url||'',
+        thumb: ch.thumb_url||ch.image_url||''
+      });
     });
   });
   if(Object.keys(db).length) buildFromData(db);
