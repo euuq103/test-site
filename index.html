@@ -478,24 +478,45 @@ function playGlitchSound(){
 
   function renderDropdown(items){
     popup.innerHTML=items.map(function(item){
-      return '<a href="'+item.url+'">'+item.label+'</a>';
+      if(item.isWorldHeader){
+        return '<a href="'+item.url+'" style="font-size:0.72rem;color:#1a9ea8;letter-spacing:0.18em;text-transform:uppercase;padding:5px 12px 3px;display:block;border-bottom:1px solid #0d2a2e;">'+item.label+'</a>';
+      }
+      if(item.disabled){
+        return '<div style="padding:4px 12px;font-size:0.75rem;color:#1a6e78;letter-spacing:0.15em;pointer-events:none;">'+item.label+'</div>';
+      }
+      return '<a href="'+item.url+'" style="padding:5px 12px 5px 22px;">'+item.label+'</a>';
     }).join('');
   }
 
-  /* 로컬 fallback */
-  if(typeof CHARACTERS!=='undefined'){
-    renderDropdown(Object.keys(CHARACTERS).map(function(key){
-      return {label:CHARACTERS[key].title,url:OC_URL+'?char='+key+'&item=0'};
-    }));
-  }
-
-  /* API에서 최신 캐릭터 목록 */
-  fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(chars){
-    if(!chars||!chars.length)return;
-    renderDropdown(chars.map(function(ch){
-      return {label:ch.name,url:OC_URL+'?char='+ch.id+'&item=0'};
-    }));
-  }).catch(function(){});
+  /* API 우선, 실패시 로컬 fallback */
+  fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(worlds){
+    if(!worlds||!worlds.length){
+      if(typeof CHARACTERS!=='undefined'){
+        renderDropdown(Object.keys(CHARACTERS).map(function(key){
+          return {label:CHARACTERS[key].title,url:OC_URL+'?char='+key+'&item=0'};
+        }));
+      }
+      return;
+    }
+    /* World별로 그룹 — World 헤더 클릭 시 해당 World로 이동 */
+    var items=[];
+    worlds.forEach(function(w){
+      if(w.characters&&w.characters.length){
+        /* World 헤더 — 클릭 가능 링크 */
+        items.push({label:w.world_name, url:OC_URL+'?world='+encodeURIComponent(w.world_name), isWorldHeader:true});
+        w.characters.forEach(function(ch){
+          items.push({label:ch.name,url:OC_URL+'?world='+encodeURIComponent(w.world_name)+'&char='+encodeURIComponent(ch.name)+'&item=0'});
+        });
+      }
+    });
+    renderDropdown(items);
+  }).catch(function(){
+    if(typeof CHARACTERS!=='undefined'){
+      renderDropdown(Object.keys(CHARACTERS).map(function(key){
+        return {label:CHARACTERS[key].title,url:OC_URL+'?char='+key+'&item=0'};
+      }));
+    }
+  });
 
   var timer=null;
   function openP(){clearTimeout(timer);popup.classList.add('open');}
