@@ -476,46 +476,34 @@ function playGlitchSound(){
   if(!popup||!wrap)return;
   var OC_URL='OC/Character/characters.html';
 
+  /* 세계관 이름만 표시 — 클릭 시 해당 세계관 characters.html로 이동 */
   function renderDropdown(items){
     popup.innerHTML=items.map(function(item){
-      if(item.isWorldHeader){
-        return '<a href="'+item.url+'" style="font-size:0.72rem;color:#1a9ea8;letter-spacing:0.18em;text-transform:uppercase;padding:5px 12px 3px;display:block;border-bottom:1px solid #0d2a2e;">'+item.label+'</a>';
-      }
-      if(item.disabled){
-        return '<div style="padding:4px 12px;font-size:0.75rem;color:#1a6e78;letter-spacing:0.15em;pointer-events:none;">'+item.label+'</div>';
-      }
-      return '<a href="'+item.url+'" style="padding:5px 12px 5px 22px;">'+item.label+'</a>';
+      return '<a href="'+item.url+'">'+item.label+'</a>';
     }).join('');
   }
 
-  /* API 우선, 실패시 로컬 fallback */
-  fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(worlds){
+  /* WORLDS 로컬 데이터로 세계관 목록 구성 */
+  function buildWorldList(){
+    if(typeof WORLDS!=='undefined'&&Object.keys(WORLDS).length){
+      return Object.keys(WORLDS).map(function(key){
+        return {label:WORLDS[key].title, url:OC_URL+'?world='+encodeURIComponent(key)};
+      });
+    }
+    return [];
+  }
+
+  /* API에서 세계관 목록 가져오기, 실패시 로컬 fallback */
+  fetch(API+'/api/worlds').then(function(r){return r.json();}).then(function(worlds){
     if(!worlds||!worlds.length){
-      if(typeof CHARACTERS!=='undefined'){
-        renderDropdown(Object.keys(CHARACTERS).map(function(key){
-          return {label:CHARACTERS[key].title,url:OC_URL+'?char='+key+'&item=0'};
-        }));
-      }
+      renderDropdown(buildWorldList());
       return;
     }
-    /* World별로 그룹 — World 헤더 클릭 시 해당 World로 이동 */
-    var items=[];
-    worlds.forEach(function(w){
-      if(w.characters&&w.characters.length){
-        /* World 헤더 — 클릭 가능 링크 */
-        items.push({label:w.world_name, url:OC_URL+'?world='+encodeURIComponent(w.world_name), isWorldHeader:true});
-        w.characters.forEach(function(ch){
-          items.push({label:ch.name,url:OC_URL+'?world='+encodeURIComponent(w.world_name)+'&char='+encodeURIComponent(ch.name)+'&item=0'});
-        });
-      }
-    });
-    renderDropdown(items);
+    renderDropdown(worlds.map(function(w){
+      return {label:w.name, url:OC_URL+'?world='+encodeURIComponent(w.name)};
+    }));
   }).catch(function(){
-    if(typeof CHARACTERS!=='undefined'){
-      renderDropdown(Object.keys(CHARACTERS).map(function(key){
-        return {label:CHARACTERS[key].title,url:OC_URL+'?char='+key+'&item=0'};
-      }));
-    }
+    renderDropdown(buildWorldList());
   });
 
   var timer=null;

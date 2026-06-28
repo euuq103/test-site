@@ -32,10 +32,10 @@
 
 /* ── 세계관 정의 ─────────────────────────────────────────── */
 var WORLDS = {
-  IMSU: {
-    title: 'IMSU',
-    desc:  'IMSU 세계관 캐릭터들'
-  }
+  Asa: { title: 'Asa!' },
+  Heaven: { title: 'Heaven' },
+  Sazuki: { title: '砂月' },
+  Trench: { title: 'trench' }
   /* 새 세계관은 여기 추가:
   ,
   World2: {
@@ -49,7 +49,7 @@ var WORLDS = {
 var CHARACTERS = {
 
   Asa: {
-    world: 'IMSU',
+    world: 'Asa',
     title: 'Asa!',
     alias: ['아사', 'asa', '임아사'],
     items: [
@@ -86,7 +86,7 @@ var CHARACTERS = {
   },
 
   Heaven: {
-    world: 'IMSU',
+    world: 'Heaven',
     title: 'Heaven',
     alias: ['헤븐', 'heaven'],
     items: [
@@ -115,7 +115,7 @@ var CHARACTERS = {
   },
 
   Sazuki: {
-    world: 'IMSU',
+    world: 'Sazuki',
     title: '砂月',
     alias: ['사월', 'sazuki', '砂月', '사'],
     items: [
@@ -144,7 +144,7 @@ var CHARACTERS = {
   },
 
   Trench: {
-    world: 'IMSU',
+    world: 'Trench',
     title: 'trench',
     alias: ['트렌치', 'trench'],
     items: [
@@ -175,7 +175,7 @@ var CHARACTERS = {
   /* ── 새 캐릭터는 여기 아래에 추가 ─────────────────────────
   ,
   NewChar: {
-    world: 'IMSU',       // ← 소속 세계관 키
+    world: ,       // ← 소속 세계관 키
     title: '새캐릭터',
     alias: ['새캐릭터', 'newchar'],
     items: [
