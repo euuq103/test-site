@@ -295,45 +295,31 @@ function loadCharacter(key){
 
 function buildFromData(db){
   CHAR_DB=db;
-  /* WORLDS 기준으로 그룹핑 */
-  var worlds = (typeof WORLDS !== 'undefined') ? WORLDS : {};
-  var worldKeys = Object.keys(worlds);
   var html = '';
 
-  if(worldKeys.length > 0){
-    /* 세계관별 그룹 헤더 + 캐릭터 버튼 */
-    worldKeys.forEach(function(wKey){
-      var wChars = Object.keys(db).filter(function(k){ return db[k].world === wKey; });
-      if(!wChars.length) return;
-      html += '<div class="world-group">';
-      html += '<div class="world-label">'+worlds[wKey].title+'</div>';
-      wChars.forEach(function(key){
-        html += '<button class="char-nav-btn" data-key="'+key+'">'+db[key].title+'</button>';
-      });
-      html += '</div>';
-    });
-    /* world 없는 캐릭터 fallback */
-    var noWorld = Object.keys(db).filter(function(k){ return !db[k].world; });
-    if(noWorld.length){
-      html += '<div class="world-group">';
-      html += '<div class="world-label">기타</div>';
-      noWorld.forEach(function(key){
-        html += '<button class="char-nav-btn" data-key="'+key+'">'+db[key].title+'</button>';
-      });
-      html += '</div>';
-    }
-  } else {
-    /* WORLDS 없으면 기존 방식 */
-    Object.keys(db).forEach(function(key){
+  /* db 키를 world 값 기준으로 그룹핑 */
+  var worldGroups = {};  /* { worldLabel: [key, key, ...] } */
+  var worldOrder  = [];  /* 순서 보존 */
+  Object.keys(db).forEach(function(key){
+    var wLabel = db[key].world || '기타';
+    if(!worldGroups[wLabel]){ worldGroups[wLabel]=[]; worldOrder.push(wLabel); }
+    worldGroups[wLabel].push(key);
+  });
+
+  worldOrder.forEach(function(wLabel){
+    html += '<div class="world-group">';
+    html += '<div class="world-label">'+wLabel+'</div>';
+    worldGroups[wLabel].forEach(function(key){
       html += '<button class="char-nav-btn" data-key="'+key+'">'+db[key].title+'</button>';
     });
-  }
+    html += '</div>';
+  });
 
   charNav.innerHTML = html;
   charNav.querySelectorAll('.char-nav-btn').forEach(function(btn){
     btn.addEventListener('click',function(){loadCharacter(btn.dataset.key);});
   });
-  /* URL 파라미터로 초기 캐릭터 선택 */
+  /* 초기 캐릭터 선택 */
   var params=new URLSearchParams(location.search);
   var charParam=params.get('char');
   var itemParam=parseInt(params.get('item')||'0',10);
