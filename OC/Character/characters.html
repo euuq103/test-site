@@ -344,8 +344,11 @@ function buildFromData(db){
     activateWorld(wOf);
     loadCharacter(charParam);
     setTimeout(function(){ selectItem(isNaN(itemParam)?0:itemParam); }, 0);
+  } else if(WORLD_PARAM && WORLD_ORDER.indexOf(WORLD_PARAM) !== -1){
+    /* URL ?world= param -> activate that world */
+    activateWorld(WORLD_PARAM);
   } else {
-    /* */
+    /* default: first world */
     if(WORLD_ORDER.length) activateWorld(WORLD_ORDER[0]);
   }
 }
