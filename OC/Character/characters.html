@@ -362,10 +362,12 @@ function buildFromAPI(worlds){
 }
 
 /* characters.js 로컬 데이터로 바로 렌더 */
-buildFromAPI([{world_name:'Character', characters: Object.keys(CHARACTERS).map(function(k){
-  var ch=CHARACTERS[k]; var item=(ch.items&&ch.items[0])||{};
-  return {name:ch.title, description:item.text||'', image_url:item.thumb||item.image||''};
-})}]);
+window.addEventListener('load', function(){
+  buildFromAPI([{world_name:'Character', characters: Object.keys(CHARACTERS).map(function(k){
+    var ch=CHARACTERS[k]; var item=(ch.items&&ch.items[0])||{};
+    return {name:ch.title, description:item.text||'', image_url:item.thumb||item.image||''};
+  })}]);
+});
 </script>
 </body>
 </html>
