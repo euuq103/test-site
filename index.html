@@ -169,12 +169,12 @@
       pointer-events: none;
     }
     @keyframes rippleAnim { to { transform: scale(2.5); opacity: 0; } }
-    .char-popup-wrap { position: relative; display: inline-block; z-index: 200; }
-    .char-popup-wrap > .btn { overflow: visible; }  /* 드롭다운 버튼은 overflow 해제 */
+    .char-popup-wrap { position: relative; display: inline-block; }
+    .char-popup-wrap > .btn { overflow: visible; }
     .char-popup {
-      display: none; position: absolute; top: calc(100% + 6px); left: 0;
+      display: none; position: fixed;
       background: #060d0e; border: 1px solid var(--line);
-      min-width: 160px; z-index: 9200; padding: 6px 0;
+      min-width: 160px; z-index: 99999; padding: 6px 0;
     }
     .char-popup.open { display: block; }
     .char-popup a {
@@ -507,7 +507,13 @@ function playGlitchSound(){
   });
 
   var timer=null;
-  function openP(){clearTimeout(timer);popup.classList.add('open');}
+  function openP(){
+    clearTimeout(timer);
+    var r=wrap.getBoundingClientRect();
+    popup.style.left=r.left+'px';
+    popup.style.top=(r.bottom+4)+'px';
+    popup.classList.add('open');
+  }
   function closeP(){timer=setTimeout(function(){popup.classList.remove('open');},280);}
   wrap.addEventListener('mouseenter',openP);
   wrap.addEventListener('mouseleave',closeP);
@@ -552,7 +558,13 @@ function playGlitchSound(){
   }
 
   var timer=null;
-  function openP(){clearTimeout(timer);popup.classList.add('open');}
+  function openP(){
+    clearTimeout(timer);
+    var r=wrap.getBoundingClientRect();
+    popup.style.left=r.left+'px';
+    popup.style.top=(r.bottom+4)+'px';
+    popup.classList.add('open');
+  }
   function closeP(){timer=setTimeout(function(){popup.classList.remove('open');},280);}
   wrap.addEventListener('mouseenter',openP);
   wrap.addEventListener('mouseleave',closeP);

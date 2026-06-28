@@ -341,7 +341,8 @@ if(localEps.length){
             return wname === WORLD_PARAM.toLowerCase();
           })
         : eps;
-      if(!filtered.length) filtered = eps; /* 매칭 없으면 전체 표시 */
+      /* 매칭 없으면 빈 상태 유지 (다른 세계관 에피소드 섞이지 않게) */
+      if(!filtered.length){ viewerTitleEl.textContent='에피소드 없음'; return; }
       var converted = filtered.map(function(ep){
         return {
           id:    ep.id,

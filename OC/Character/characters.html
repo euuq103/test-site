@@ -359,7 +359,11 @@ fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(w
     : worlds;
 
   if(!filtered||!filtered.length){
-    buildFromData(getLocalChars());
+    /* API에 해당 세계관 캐릭터 없으면 로컬 fallback */
+    var local = getLocalChars();
+    if(Object.keys(local).length){ buildFromData(local); return; }
+    /* 로컬도 없으면 빈 상태 */
+    charNav.innerHTML='<div style="color:#3a6a72;padding:12px;font-size:.8rem;">등록된 캐릭터 없음</div>';
     return;
   }
   /* API 응답 -> 로컬 포맷 변환
