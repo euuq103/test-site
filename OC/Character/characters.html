@@ -158,14 +158,14 @@
       <a class="back-btn" href="../../index.html">&#8592; Back</a>
       <button id="sidebarToggle">&#9776; Nav</button>
     </div>
-    <span class="page-title" id="pageTitle">Characters</span>
+    <span class="page-title" id="pageTitle">WORLD</span>
     <span class="copyright">&copy; Lawren103 &mdash; Commercial Use Prohibited</span>
   </div>
 
   <div class="layout" id="charLayout">
     <aside class="sidebar">
       <div class="sidebar-block">
-        <div class="sidebar-label">Characters</div>
+        <div class="sidebar-label">World</div>
         <div class="char-nav-list" id="charNav"></div>
       </div>
       <div class="sidebar-block">
@@ -300,33 +300,31 @@ function buildFromData(db){
   setTimeout(function(){selectItem(isNaN(itemParam)?0:itemParam);},0);
 }
 
-/* 로컬 fallback 즉시 사용 */
-if(typeof CHARACTERS!=='undefined'){
-  buildFromData(CHARACTERS);
-}
-
-/* API에서 최신 캐릭터 데이터 */
-fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(chars){
-  if(!chars||!chars.length)return;
-  /* API 응답을 로컬 포맷으로 변환 */
+/* API 우선, 실패시 로컬 fallback */
+fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(worlds){
+  if(!worlds||!worlds.length){
+    if(typeof CHARACTERS!=='undefined') buildFromData(CHARACTERS);
+    return;
+  }
+  /* API 응답(World별 그룹) -> 로컬 포맷 변환 */
   var db={};
-  chars.forEach(function(ch){
-    db[ch.id]={
-      title: ch.name,
-      items: (ch.profiles||[]).map(function(p){
-        return {
-          label: p.label||p.name||'Base',
-          title: p.title||p.name||'Base',
-          text: p.description||p.text||'',
-          image: p.image_url||p.image||'',
-          thumb: p.thumb_url||p.thumb||p.image_url||p.image||''
-        };
-      })
-    };
+  worlds.forEach(function(w){
+    (w.characters||[]).forEach(function(ch){
+      var key='char_'+ch.id;
+      if(!db[w.world_name]) db[w.world_name]={title:w.world_name, items:[]};
+      db[w.world_name].items.push({
+        label: ch.name,
+        title: ch.name,
+        text:  ch.description||'',
+        image: ch.image_url||'',
+        thumb: ch.image_url||''
+      });
+    });
   });
   if(Object.keys(db).length) buildFromData(db);
+  else if(typeof CHARACTERS!=='undefined') buildFromData(CHARACTERS);
 }).catch(function(){
-  /* API 실패 시 로컬 유지 (이미 렌더됨) */
+  if(typeof CHARACTERS!=='undefined') buildFromData(CHARACTERS);
 });
 </script>
 </body>
