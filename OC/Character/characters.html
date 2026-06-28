@@ -115,11 +115,12 @@
     .char-nav-btn:hover { border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(47,211,224,.22); transform: translateY(-1px); }
     .thumb-list { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
     .thumb-btn {
-      display: flex; flex-direction: column; align-items: center; gap: 5px;
-      border: 1px solid var(--line); padding: 5px; background: #0b0b0b;
-      color: var(--text); cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      border: 1px solid var(--line); padding: 4px; background: #0b0b0b;
+      color: var(--text); cursor: pointer; width: 60px;
       transition: border-color .2s, box-shadow .2s, transform .2s;
     }
+    .thumb-btn img { width:52px; height:52px; object-fit:cover; display:block; }
     .thumb-btn.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(47,211,224,.18) inset; }
     .thumb-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
     .thumb-image { width: 100%; aspect-ratio: 1; background: rgba(94,242,255,.08) center/cover no-repeat; border: 1px solid rgba(94,242,255,.1); }
@@ -210,7 +211,7 @@ var API = 'https://test-site-f14v.onrender.com';
 var urlParams = new URLSearchParams(location.search);
 var WORLD_PARAM = urlParams.get('world') || '';
 
-/* ── 파티클 ── */
+/* ── */
 (function(){
   var c=document.getElementById('particles'),ctx=c.getContext('2d');
   var W,H,dots=[];
@@ -221,7 +222,7 @@ var WORLD_PARAM = urlParams.get('world') || '';
   draw();
 })();
 
-/* ── 커서 ── */
+/* ── */
 (function(){
   var dot=document.getElementById('cursor-dot'),ring=document.getElementById('cursor-ring');
   var mx=0,my=0,rx=0,ry=0;
@@ -234,7 +235,7 @@ var WORLD_PARAM = urlParams.get('world') || '';
   (function moveRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(moveRing);})();
 })();
 
-/* ── 사이드바 토글 ── */
+/* ── */
 var charLayout=document.getElementById('charLayout');
 var toggleBtn=document.getElementById('sidebarToggle');
 var sidebarOpen=window.innerWidth>640;
@@ -249,7 +250,7 @@ toggleBtn.addEventListener('click',function(){
   }
 });
 
-/* ── 캐릭터 시스템 ── */
+/* ── */
 var charNav=document.getElementById('charNav');
 var thumbList=document.getElementById('thumbList');
 var mainImage=document.getElementById('mainImage');
@@ -258,7 +259,7 @@ var detailTitle=document.getElementById('detailTitle');
 var detailText=document.getElementById('detailText');
 var pageTitle=document.getElementById('pageTitle');
 
-/* 현재 로드된 캐릭터 데이터 */
+/* */
 var CHAR_DB = {};   /* key -> {title, items:[{label,title,text,image,thumb}]} */
 var currentKey = null;
 var currentItemIdx = 0;
@@ -268,7 +269,7 @@ function selectItem(idx){
   if(!ch)return;
   currentItemIdx=idx;
   var items=ch.items||[];
-  /* 썸네일 활성 */
+  /* */
   thumbList.querySelectorAll('.thumb-btn').forEach(function(b,i){b.classList.toggle('active',i===idx);});
   var item=items[idx];
   if(!item){detailTitle.textContent='—';detailText.textContent='';return;}
@@ -284,11 +285,11 @@ function loadCharacter(key){
   var ch=CHAR_DB[key];
   if(!ch)return;
   pageTitle.textContent=ch.title;
-  /* thumbList 캐릭터 버튼 active 동기화 */
+  /* thumbList */
   thumbList.querySelectorAll('.thumb-btn[data-key]').forEach(function(b){
     b.classList.toggle('active', b.dataset.key===key);
   });
-  /* 첫 번째 프로필 아이템 메인뷰에 표시 */
+  /* */
   currentItemIdx=0;
   var items=ch.items||[];
   if(!items.length){
@@ -305,7 +306,7 @@ function loadCharacter(key){
   else{mainImage.style.display='none';noImg.style.display='';}
 }
 
-/* ── 2단계 네비: WORLD섹션(charNav) + PROFILE섹션(thumbList) ── */
+/* ── 2*/
 var WORLD_GROUPS = {};   /* { worldName: [dbKey, ...] } */
 var WORLD_ORDER  = [];
 
@@ -315,12 +316,12 @@ function buildFromData(db){
   WORLD_ORDER  = [];
 
   Object.keys(db).forEach(function(key){
-    var wLabel = db[key].world || '기타';
+    var wLabel = db[key].world || 'etc';
     if(!WORLD_GROUPS[wLabel]){ WORLD_GROUPS[wLabel]=[]; WORLD_ORDER.push(wLabel); }
     WORLD_GROUPS[wLabel].push(key);
   });
 
-  /* WORLD 섹션: 세계관 버튼 목록 (charNav) */
+  /* WORLD */
   var html = '';
   WORLD_ORDER.forEach(function(wLabel){
     html += '<button class="world-nav-btn" data-world="'+wLabel+'">'+wLabel+'</button>';
@@ -330,12 +331,12 @@ function buildFromData(db){
     btn.addEventListener('click', function(){
       charNav.querySelectorAll('.world-nav-btn').forEach(function(b){ b.classList.remove('active'); });
       btn.classList.add('active');
-      /* PROFILE 섹션: 해당 세계관 캐릭터 썸네일로 교체 */
+      /* PROFILE */
       loadWorldChars(btn.dataset.world);
     });
   });
 
-  /* 초기 선택 */
+  /* */
   var params    = new URLSearchParams(location.search);
   var charParam = params.get('char');
   var itemParam = parseInt(params.get('item')||'0', 10);
@@ -346,12 +347,12 @@ function buildFromData(db){
     loadCharacter(charParam);
     setTimeout(function(){ selectItem(isNaN(itemParam)?0:itemParam); }, 0);
   } else {
-    /* 첫 세계관 자동 선택 */
+    /* */
     if(WORLD_ORDER.length) activateWorld(WORLD_ORDER[0]);
   }
 }
 
-/* 세계관 버튼 활성화 + PROFILE 갱신 */
+/* */
 function activateWorld(wLabel){
   charNav.querySelectorAll('.world-nav-btn').forEach(function(b){
     b.classList.toggle('active', b.dataset.world === wLabel);
@@ -359,7 +360,7 @@ function activateWorld(wLabel){
   loadWorldChars(wLabel);
 }
 
-/* PROFILE 섹션(thumbList)에 해당 세계관 캐릭터 버튼 렌더 */
+/* PROFILE */
 function loadWorldChars(wLabel){
   var keys = WORLD_GROUPS[wLabel] || [];
   thumbList.innerHTML = keys.map(function(key, i){
@@ -379,17 +380,17 @@ function loadWorldChars(wLabel){
       loadCharacter(btn.dataset.key);
     });
   });
-  /* 첫 캐릭터 자동 표시 */
+  /* */
   if(keys.length) loadCharacter(keys[0]);
 }
 
-/* 세계관 타이틀 설정 */
+/* */
 if(WORLD_PARAM){
   var pageTitleEl = document.getElementById('pageTitle');
   if(pageTitleEl) pageTitleEl.textContent = WORLD_PARAM;
 }
 
-/* 로컬 fallback: 세계관 필터 */
+/* */
 function getLocalChars(){
   if(typeof CHARACTERS==='undefined') return {};
   if(!WORLD_PARAM) return CHARACTERS;
@@ -403,44 +404,33 @@ function getLocalChars(){
   return filtered;
 }
 
-/* API 우선, 실패시 로컬 fallback */
-fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(worlds){
-  /* 세계관 필터 */
-  var filtered = WORLD_PARAM
-    ? worlds.filter(function(w){
-        var wn = (w.world_name||w.name||'').toLowerCase();
-        return wn===WORLD_PARAM.toLowerCase();
-      })
-    : worlds;
+/* API */
+fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(apiData){
+  /* apiData = [{world_id, world_name, characters:[{id,name,description,image_url,thumb_url}]}] */
+  if(!apiData||!apiData.length){ buildFromData(getLocalChars()); return; }
 
-  if(!filtered||!filtered.length){
-    /* API에 해당 세계관 캐릭터 없으면 로컬 fallback */
-    var local = getLocalChars();
-    if(Object.keys(local).length){ buildFromData(local); return; }
-    /* 로컬도 없으면 빈 상태 */
-    charNav.innerHTML='<div style="color:#3a6a72;padding:12px;font-size:.8rem;">등록된 캐릭터 없음</div>';
-    return;
-  }
-  /* API 응답 -> 로컬 포맷 변환
-     구조: { worldName: { world, title, items:[{label,title,text,image,thumb}] } }
-     캐릭터 여러 명 = items 배열에 모두 담기 */
-  var db={};
-  filtered.forEach(function(w){
-    var wName = w.world_name || w.name || 'Unknown';
-    var wKey  = 'world_'+wName;
-    if(!db[wKey]){
-      db[wKey]={ world: wName, title: wName, items:[] };  /* world = 실제 이름 */
-    }
-    (w.characters||[]).forEach(function(ch){
-      db[wKey].items.push({
-        label: ch.name,
+  /* API 
+     db 
+     */
+  var db = {};
+  apiData.forEach(function(worldGroup){
+    var wName = worldGroup.world_name || 'Unknown';
+    (worldGroup.characters||[]).forEach(function(ch){
+      var key = 'char_'+ch.id;
+      db[key] = {
+        world: wName,
         title: ch.name,
-        text:  ch.description||'',
-        image: ch.image_url||ch.main_url||'',
-        thumb: ch.thumb_url||''   /* 얼굴 이미지만, 없으면 빈값 */
-      });
+        items: [{
+          label: ch.name,
+          title: ch.name,
+          text:  ch.description || '',
+          image: ch.image_url  || '',
+          thumb: ch.thumb_url  || ''
+        }]
+      };
     });
   });
+
   if(Object.keys(db).length) buildFromData(db);
   else buildFromData(getLocalChars());
 }).catch(function(){
