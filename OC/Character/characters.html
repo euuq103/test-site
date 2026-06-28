@@ -188,7 +188,6 @@
 </div>
 
 <script>
-var API = 'https://test-site-f14v.onrender.com';
 
 /* ── 파티클 ── */
 (function(){
@@ -362,25 +361,11 @@ function buildFromAPI(worlds){
   }
 }
 
-/* API 우선, 실패시 로컬 fallback */
-fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(worlds){
-  if(worlds && worlds.length){
-    buildFromAPI(worlds);
-  } else if(typeof CHARACTERS!=='undefined'){
-    /* 로컬 CHARACTERS -> WORLD_DB 변환 */
-    buildFromAPI([{world_name:'Character', characters: Object.keys(CHARACTERS).map(function(k){
-      var ch=CHARACTERS[k]; var item=(ch.items&&ch.items[0])||{};
-      return {name:ch.title, description:item.text||'', image_url:item.image||''};
-    })}]);
-  }
-}).catch(function(){
-  if(typeof CHARACTERS!=='undefined'){
-    buildFromAPI([{world_name:'Character', characters: Object.keys(CHARACTERS).map(function(k){
-      var ch=CHARACTERS[k]; var item=(ch.items&&ch.items[0])||{};
-      return {name:ch.title, description:item.text||'', image_url:item.image||''};
-    })}]);
-  }
-});
+/* characters.js 로컬 데이터로 바로 렌더 */
+buildFromAPI([{world_name:'Character', characters: Object.keys(CHARACTERS).map(function(k){
+  var ch=CHARACTERS[k]; var item=(ch.items&&ch.items[0])||{};
+  return {name:ch.title, description:item.text||'', image_url:item.thumb||item.image||''};
+})}]);
 </script>
 </body>
 </html>
