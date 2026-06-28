@@ -379,25 +379,23 @@ function buildFromAPI(worlds){
   }
 }
 
-/* API 우선, 실패시 로컬 fallback */
-fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(worlds){
-  if(worlds && worlds.length){
-    buildFromAPI(worlds);
-  } else if(typeof CHARACTERS!=='undefined'){
-    /* 로컬 CHARACTERS -> WORLD_DB 변환 */
-    buildFromAPI([{world_name:'Character', characters: Object.keys(CHARACTERS).map(function(k){
-      var ch=CHARACTERS[k]; var item=(ch.items&&ch.items[0])||{};
-      return {name:ch.title, description:item.text||'', image_url:item.image||''};
-    })}]);
-  }
-}).catch(function(){
+/* 로컬 fallback 즉시 실행, API 데이터로 덮어쓰기 */
+function buildFromLocal(){
   if(typeof CHARACTERS!=='undefined'){
     buildFromAPI([{world_name:'Character', characters: Object.keys(CHARACTERS).map(function(k){
       var ch=CHARACTERS[k]; var item=(ch.items&&ch.items[0])||{};
-      return {name:ch.title, description:item.text||'', image_url:item.image||''};
+      return {name:ch.title, description:item.text||'', image_url:item.thumb||item.image||''};
     })}]);
   }
+}
+/* 먼저 로컬 데이터로 즉시 렌더 */
+window.addEventListener('DOMContentLoaded', function(){
+  if(typeof CHARACTERS!=='undefined') buildFromLocal();
 });
+/* API 응답이 오면 덮어쓰기 */
+fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(worlds){
+  if(worlds && worlds.length) buildFromAPI(worlds);
+}).catch(function(){});
 </script>
 </body>
 </html>
