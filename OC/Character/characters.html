@@ -327,10 +327,7 @@ function buildFromData(db){
   charNav.innerHTML = html;
   charNav.querySelectorAll('.world-nav-btn').forEach(function(btn){
     btn.addEventListener('click', function(){
-      charNav.querySelectorAll('.world-nav-btn').forEach(function(b){ b.classList.remove('active'); });
-      btn.classList.add('active');
-      /* PROFILE */
-      loadWorldChars(btn.dataset.world);
+      activateWorld(btn.dataset.world); // activateWorld updates pageTitle too
     });
   });
 
