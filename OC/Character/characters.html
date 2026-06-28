@@ -370,7 +370,7 @@ fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(w
     var wName = w.world_name || w.name || 'Unknown';
     var wKey  = 'world_'+wName;
     if(!db[wKey]){
-      db[wKey]={ world: wKey, title: wName, items:[] };
+      db[wKey]={ world: wName, title: wName, items:[] };  /* world = 실제 이름 */
     }
     (w.characters||[]).forEach(function(ch){
       db[wKey].items.push({

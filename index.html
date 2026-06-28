@@ -150,8 +150,9 @@
     }
     .btn:hover {
       border-color: var(--accent); color: #fff;
-      box-shadow: 0 0 14px rgba(47,211,224,.3); transform: translateY(-2px);
+      box-shadow: 0 0 14px rgba(47,211,224,.3);
     }
+    .char-popup-wrap .btn:hover { transform: none; }  /* 드롭다운 트리거는 transform 없음 */
     .btn.disabled { opacity: .3; pointer-events: none; cursor: default; }
     .btn-wrap { position: relative; display: inline-block; }
     .badge-dot {
@@ -169,6 +170,7 @@
     }
     @keyframes rippleAnim { to { transform: scale(2.5); opacity: 0; } }
     .char-popup-wrap { position: relative; display: inline-block; z-index: 200; }
+    .char-popup-wrap > .btn { overflow: visible; }  /* 드롭다운 버튼은 overflow 해제 */
     .char-popup {
       display: none; position: absolute; top: calc(100% + 6px); left: 0;
       background: #060d0e; border: 1px solid var(--line);
