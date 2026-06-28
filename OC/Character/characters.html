@@ -197,6 +197,8 @@
 
 <script>
 var API = 'https://test-site-f14v.onrender.com';
+var urlParams = new URLSearchParams(location.search);
+var WORLD_PARAM = urlParams.get('world') || '';
 
 /* ── 파티클 ── */
 (function(){
@@ -340,31 +342,61 @@ function buildFromData(db){
   setTimeout(function(){selectItem(isNaN(itemParam)?0:itemParam);},0);
 }
 
+/* 세계관 타이틀 설정 */
+if(WORLD_PARAM){
+  var pageTitleEl = document.getElementById('pageTitle');
+  if(pageTitleEl) pageTitleEl.textContent = WORLD_PARAM;
+}
+
+/* 로컬 fallback: 세계관 필터 */
+function getLocalChars(){
+  if(typeof CHARACTERS==='undefined') return {};
+  if(!WORLD_PARAM) return CHARACTERS;
+  var filtered={};
+  Object.keys(CHARACTERS).forEach(function(key){
+    var ch=CHARACTERS[key];
+    if((ch.world||'').toLowerCase()===WORLD_PARAM.toLowerCase()){
+      filtered[key]=ch;
+    }
+  });
+  return filtered;
+}
+
 /* API 우선, 실패시 로컬 fallback */
 fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(worlds){
-  if(!worlds||!worlds.length){
-    if(typeof CHARACTERS!=='undefined') buildFromData(CHARACTERS);
+  /* 세계관 필터 */
+  var filtered = WORLD_PARAM
+    ? worlds.filter(function(w){
+        return w.world_name.toLowerCase()===WORLD_PARAM.toLowerCase();
+      })
+    : worlds;
+
+  if(!filtered||!filtered.length){
+    buildFromData(getLocalChars());
     return;
   }
-  /* API 응답(World별 그룹) -> 로컬 포맷 변환 */
+  /* API 응답 -> 로컬 포맷 변환 */
   var db={};
-  worlds.forEach(function(w){
+  filtered.forEach(function(w){
     (w.characters||[]).forEach(function(ch){
       var key='char_'+ch.id;
-      if(!db[w.world_name]) db[w.world_name]={title:w.world_name, items:[]};
-      db[w.world_name].items.push({
-        label: ch.name,
+      db[key]={
+        world: w.world_name,
         title: ch.name,
-        text:  ch.description||'',
-        image: ch.image_url||'',
-        thumb: ch.image_url||''
-      });
+        items:[{
+          label: ch.name,
+          title: ch.name,
+          text:  ch.description||'',
+          image: ch.image_url||ch.main_url||'',
+          thumb: ch.thumb_url||ch.image_url||''
+        }]
+      };
     });
   });
   if(Object.keys(db).length) buildFromData(db);
-  else if(typeof CHARACTERS!=='undefined') buildFromData(CHARACTERS);
+  else buildFromData(getLocalChars());
 }).catch(function(){
-  if(typeof CHARACTERS!=='undefined') buildFromData(CHARACTERS);
+  buildFromData(getLocalChars());
 });
 </script>
 </body>

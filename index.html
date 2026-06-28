@@ -266,12 +266,10 @@
       <div>
         <p class="section-label">Comics</p>
         <div class="btn-row" id="comicsBtnRow">
-          <div class="btn-wrap">
-            <a class="btn" href="comic/Asa.HTML">Asa!</a>
-            <span class="badge-dot" id="comicBadge"></span>
+          <div class="char-popup-wrap" id="comicPopupWrap">
+            <button class="btn" id="comicPopupBtn">Comics &#9660;<span class="badge-dot" id="comicBadge"></span></button>
+            <div class="char-popup" id="comicPopup"></div>
           </div>
-          <span class="btn disabled">Coming Soon</span>
-          <span class="btn disabled">Coming Soon</span>
         </div>
       </div>
 
@@ -505,6 +503,51 @@ function playGlitchSound(){
   }).catch(function(){
     renderDropdown(buildWorldList());
   });
+
+  var timer=null;
+  function openP(){clearTimeout(timer);popup.classList.add('open');}
+  function closeP(){timer=setTimeout(function(){popup.classList.remove('open');},280);}
+  wrap.addEventListener('mouseenter',openP);
+  wrap.addEventListener('mouseleave',closeP);
+  popup.addEventListener('mouseenter',openP);
+  popup.addEventListener('mouseleave',closeP);
+})();
+
+/* ── 만화 드롭다운 (세계관만) ── */
+(function(){
+  var popup=document.getElementById('comicPopup');
+  var wrap=document.getElementById('comicPopupWrap');
+  if(!popup||!wrap)return;
+  var COMIC_BASE='comic/Asa.HTML';
+
+  function renderComicDropdown(items){
+    popup.innerHTML=items.map(function(item){
+      return '<a href="'+item.url+'">'+item.label+'</a>';
+    }).join('');
+  }
+
+  /* API에서 세계관 목록 가져오기 */
+  fetch(API+'/api/worlds').then(function(r){return r.json();}).then(function(worlds){
+    if(!worlds||!worlds.length){
+      renderComicDropdown(buildComicWorldList());
+      return;
+    }
+    renderComicDropdown(worlds.map(function(w){
+      return {label:w.name, url:COMIC_BASE+'?world='+encodeURIComponent(w.name)};
+    }));
+  }).catch(function(){
+    renderComicDropdown(buildComicWorldList());
+  });
+
+  /* 로컬 fallback: WORLDS 사용 */
+  function buildComicWorldList(){
+    if(typeof WORLDS!=='undefined'&&Object.keys(WORLDS).length){
+      return Object.keys(WORLDS).map(function(key){
+        return {label:WORLDS[key].title, url:COMIC_BASE+'?world='+encodeURIComponent(key)};
+      });
+    }
+    return [{label:'Asa!', url:COMIC_BASE}];
+  }
 
   var timer=null;
   function openP(){clearTimeout(timer);popup.classList.add('open');}

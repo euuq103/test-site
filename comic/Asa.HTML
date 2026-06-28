@@ -182,12 +182,12 @@
 
 <div class="container">
   <div class="top">
-    <h1>Asa!</h1>
+    <h1 id="worldTitle">Asa!</h1>
     <a href="../index.html">&#8592; Home</a>
   </div>
   <div class="comic-layout" id="comicLayout">
     <div class="sidebar">
-      <div class="nav-label">Episodes</div>
+      <div class="nav-label" id="navWorldLabel">Episodes</div>
       <div id="episodeList"></div>
     </div>
     <div class="viewer">
@@ -200,6 +200,10 @@
 
 <script>
 var API = 'https://test-site-f14v.onrender.com';
+
+/* ── URL 파라미터에서 세계관 읽기 ── */
+var urlParams = new URLSearchParams(location.search);
+var WORLD_PARAM = urlParams.get('world') || '';
 
 /* ── 파티클 ── */
 (function(){
@@ -296,35 +300,63 @@ function showEpisode(index){
   if(window.innerWidth<=640) layout.classList.remove('mobile-open');
 }
 
-/* 로컬 fallback 먼저 */
-if(typeof EPISODES!=='undefined'&&EPISODES.length){
-  renderEpisodeList(EPISODES);
+/* 세계관 타이틀 설정 */
+if(WORLD_PARAM){
+  var worldTitle = document.getElementById('worldTitle');
+  var navWorldLabel = document.getElementById('navWorldLabel');
+  if(worldTitle) worldTitle.textContent = WORLD_PARAM;
+  if(navWorldLabel) navWorldLabel.textContent = WORLD_PARAM + ' — EP';
+}
+
+/* 로컬 fallback: 세계관 필터 */
+function getLocalEpisodes(){
+  if(typeof EPISODES==='undefined'||!EPISODES.length) return [];
+  if(!WORLD_PARAM) return EPISODES;
+  return EPISODES.filter(function(ep){
+    return (ep.world||'').toLowerCase()===WORLD_PARAM.toLowerCase();
+  });
+}
+
+var localEps = getLocalEpisodes();
+if(localEps.length){
+  renderEpisodeList(localEps);
   showEpisode(0);
 } else {
   viewerTitleEl.textContent='Loading...';
 }
 
-/* API에서 최신 에피소드 */
-fetch(API+'/api/episodes').then(function(r){return r.json();}).then(function(eps){
-  if(!eps||!eps.length)return;
-  /* API 응답을 로컬 포맷으로 변환 */
-  var converted=eps.map(function(ep){
-    return {
-      id: ep.id,
-      title: ep.title,
-      label: ep.title,
-      pages: (ep.pages||[]).map(function(p){return p.image_url||p;})
-    };
-  });
-  renderEpisodeList(converted);
-  showEpisode(0);
-}).catch(function(){
-  /* API 실패시 로컬 유지 */
-  if(typeof EPISODES!=='undefined'&&EPISODES.length){
-    renderEpisodeList(EPISODES);
+/* API에서 세계관 필터된 에피소드 */
+(function(){
+  var url = API+'/api/episodes';
+  /* world_id 로 필터하려면 먼저 worlds 목록 가져와서 매핑 */
+  fetch(API+'/api/worlds').then(function(r){return r.json();}).then(function(worlds){
+    var targetWorld = worlds.find(function(w){
+      return w.name.toLowerCase()===(WORLD_PARAM||'').toLowerCase();
+    });
+    var fetchUrl = targetWorld
+      ? API+'/api/episodes?world_id='+targetWorld.id
+      : API+'/api/episodes';
+    return fetch(fetchUrl);
+  }).then(function(r){return r.json();}).then(function(eps){
+    if(!eps||!eps.length) return;
+    var converted=eps.map(function(ep){
+      return {
+        id: ep.id,
+        title: ep.title,
+        label: ep.title,
+        pages: (ep.pages||[]).map(function(p){return p.image_url||p;})
+      };
+    });
+    renderEpisodeList(converted);
     showEpisode(0);
-  }
-});
+  }).catch(function(){
+    /* API 실패 — 로컬 유지 */
+    if(!localEps.length && typeof EPISODES!=='undefined'){
+      renderEpisodeList(EPISODES);
+      showEpisode(0);
+    }
+  });
+})();
 
 document.getElementById('prevBtn').addEventListener('click',function(){showEpisode(currentIndex-1);});
 document.getElementById('nextBtn').addEventListener('click',function(){showEpisode(currentIndex+1);});
