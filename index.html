@@ -574,11 +574,7 @@ document.addEventListener('click',function(e){
 
 /* ── 뉴스 ── */
 (function(){
-  var FALLBACK=[
-    {date:'2026.06.27',tag:'Update',text:'Site redesigned \u2014 new layout & features live.',url:''},
-    {date:'2026.06.20',tag:'Comic', text:'Asa! Episode update \u2014 new pages uploaded.',    url:'comic/Asa.HTML'},
-    {date:'2026.06.10',tag:'OC',    text:'Character profile page updated.',                   url:'OC/Character/characters.html'}
-  ];
+  var FALLBACK=[];
   function renderNews(items){
     var list=document.getElementById('newsList');
     list.innerHTML=items.slice(0,3).map(function(n){
