@@ -602,11 +602,10 @@ document.addEventListener('click',function(e){
     }
     localStorage.setItem('lw103_last_visit',newest);
   }
-  /* 즉시 fallback 렌더 */
-  renderNews(FALLBACK);
-  /* API에서 최신 뉴스 (우선순위 높음) */
+  /* API 우선, 실패시 fallback */
   fetch(API+'/api/news').then(function(r){return r.json();})
-    .then(function(d){if(d&&d.length)renderNews(d);}).catch(function(){});
+    .then(function(d){if(d&&d.length)renderNews(d);else renderNews(FALLBACK);})
+    .catch(function(){renderNews(FALLBACK);});
 })();
 </script>
 </body>
