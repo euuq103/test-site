@@ -24,16 +24,11 @@
       overflow-x: hidden;
       cursor: none;
     }
-
-    /* 파티클 */
     #canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-
-    /* 커서 */
     #cursor-dot {
       position: fixed; width: 6px; height: 6px;
       background: var(--accent); border-radius: 50%;
       transform: translate(-50%,-50%); pointer-events: none; z-index: 9999;
-
     }
     #cursor-ring {
       position: fixed; width: 28px; height: 28px;
@@ -41,8 +36,6 @@
       transform: translate(-50%,-50%); pointer-events: none; z-index: 9998;
       transition: width .15s, height .15s, border-color .15s, opacity 0.4s;
     }
-
-    /* 페이지 */
     .page {
       position: relative; z-index: 1;
       width: min(860px, calc(100% - 40px));
@@ -51,8 +44,6 @@
       display: flex; flex-direction: column;
       align-items: center; gap: 28px;
     }
-
-    /* 헤더 */
     .header { text-align: center; }
     .eyebrow {
       font-size: .75rem; letter-spacing: .35em;
@@ -65,8 +56,6 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text; line-height: 1.1;
     }
-
-    /* 검색 */
     .search-wrap {
       width: 100%; max-width: 440px;
       position: relative; z-index: 9000;
@@ -109,11 +98,7 @@
     }
     .sr-text { font-size: .85rem; color: #8dd6de; }
     .sr-none { padding: 12px 14px; color: var(--muted); font-size: .82rem; }
-
-    /* 메인 블록 */
     .main-block { width: 100%; display: flex; align-items: flex-start; gap: 32px; }
-
-    /* 프로필 */
     .profile-col { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .profile-img-wrap { position: relative; width: 146px; height: 146px; }
     .profile-border-spin {
@@ -146,8 +131,6 @@
       100% { transform:translate(0,0);       filter:none; }
     }
     .email-label { font-size: .72rem; color: #3a6a72; letter-spacing: .08em; text-align: center; }
-
-    /* 섹션 */
     .sections { flex: 1; display: flex; flex-direction: column; gap: 20px; }
     .section-label {
       font-size: .72rem; letter-spacing: .3em; text-transform: uppercase;
@@ -155,8 +138,6 @@
       padding-bottom: 5px; border-bottom: 1px solid var(--line);
     }
     .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
-
-    /* 버튼 */
     .btn {
       display: inline-block; padding: 9px 18px;
       border: 1px solid var(--line);
@@ -171,10 +152,7 @@
       border-color: var(--accent); color: #fff;
       box-shadow: 0 0 14px rgba(47,211,224,.3); transform: translateY(-2px);
     }
-    
     .btn.disabled { opacity: .3; pointer-events: none; cursor: default; }
-
-    /* 배지 */
     .btn-wrap { position: relative; display: inline-block; }
     .badge-dot {
       position: absolute; top: -5px; right: -5px;
@@ -183,8 +161,6 @@
       z-index: 10;
     }
     .badge-dot.show { display: block; }
-
-    /* 리플 */
     .ripple {
       position: absolute; border-radius: 50%;
       background: rgba(94,242,255,.15);
@@ -192,8 +168,6 @@
       pointer-events: none;
     }
     @keyframes rippleAnim { to { transform: scale(2.5); opacity: 0; } }
-
-    /* 캐릭터 드롭다운 */
     .char-popup-wrap { position: relative; display: inline-block; z-index: 10; }
     .char-popup {
       display: none; position: absolute; top: calc(100% + 6px); left: 0;
@@ -209,8 +183,6 @@
     }
     .char-popup a:last-child { border-bottom: none; }
     .char-popup a:hover { background: rgba(47,211,224,.08); color: #fff; }
-
-    /* 최근 */
     .recent-section { width: 100%; }
     .recent-list { display: flex; flex-wrap: wrap; gap: 6px; }
     .recent-item {
@@ -226,8 +198,6 @@
       border: 1px solid var(--line); color: var(--muted);
       letter-spacing: .08em; text-transform: uppercase;
     }
-
-    /* 뉴스 */
     .news-section { width: 100%; }
     .news-list { display: flex; flex-direction: column; gap: 6px; }
     .news-item {
@@ -247,8 +217,6 @@
     .news-text { font-size: .83rem; color: #8dd6de; letter-spacing: .04em; flex: 1; }
     .news-arrow { font-size: .85rem; color: var(--muted); flex-shrink: 0; }
     #newsBadge { display: none; font-size: .7rem; color: #ff4466; margin-left: 8px; }
-
-    /* 푸터 */
     .footer { font-size: .7rem; color: #1e4a52; letter-spacing: .12em; text-align: center; }
   </style>
 </head>
@@ -259,26 +227,20 @@
 <canvas id="canvas"></canvas>
 
 <div class="page">
-
-  <!-- 헤더 -->
   <header class="header">
     <p class="eyebrow">Creator &middot; Comic &middot; OC</p>
     <h1>Lawren103</h1>
   </header>
 
-  <!-- 검색 -->
   <div class="search-wrap" id="searchWrap">
-    <input type="text" id="searchInput" placeholder="Search comics, characters, news..." autocomplete="off" />
+    <input type="text" id="searchInput" placeholder="Search comics, characters..." autocomplete="off" />
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5ef2ff" stroke-width="2">
       <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
     </svg>
     <div id="searchResults"></div>
   </div>
 
-  <!-- 프로필 + 버튼 -->
   <div class="main-block">
-
-    <!-- 왼쪽: 프로필 이미지 -->
     <div class="profile-col">
       <div class="profile-img-wrap">
         <div class="profile-border-spin"></div>
@@ -290,10 +252,7 @@
       <span class="email-label">euuq418103@naver.com</span>
     </div>
 
-    <!-- 오른쪽: 버튼 섹션들 -->
     <div class="sections">
-
-      <!-- Social -->
       <div>
         <p class="section-label">Social</p>
         <div class="btn-row">
@@ -304,10 +263,9 @@
         </div>
       </div>
 
-      <!-- Comics -->
       <div>
         <p class="section-label">Comics</p>
-        <div class="btn-row">
+        <div class="btn-row" id="comicsBtnRow">
           <div class="btn-wrap">
             <a class="btn" href="comic/Asa.HTML">Asa!</a>
             <span class="badge-dot" id="comicBadge"></span>
@@ -317,7 +275,6 @@
         </div>
       </div>
 
-      <!-- Info -->
       <div>
         <p class="section-label">Info</p>
         <div class="btn-row">
@@ -327,11 +284,9 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- 최근 본 콘텐츠 -->
   <div class="recent-section" id="recentSection" style="display:none">
     <p class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
       <span>Recent</span>
@@ -340,7 +295,6 @@
     <div class="recent-list" id="recentList"></div>
   </div>
 
-  <!-- 뉴스 -->
   <div class="news-section">
     <p class="section-label">
       Latest News
@@ -355,6 +309,8 @@
 </div>
 
 <script>
+var API = 'https://test-site-f14v.onrender.com';
+
 /* ── 파티클 ── */
 (function(){
   var c=document.getElementById('canvas'),ctx=c.getContext('2d');
@@ -414,7 +370,7 @@
   })();
 })();
 
-/* ── 오디오 유틸 (전역) ── */
+/* ── 오디오 ── */
 var _actx=null;
 function getACtx(){if(!_actx){var A=window.AudioContext||window.webkitAudioContext;if(A)_actx=new A();}return _actx;}
 function playTypingTick(){
@@ -448,27 +404,36 @@ function playGlitchSound(){
 (function(){
   var inp=document.getElementById('searchInput');
   var box=document.getElementById('searchResults');
-
-  /* 인덱스 빌드 */
-  var IDX=[];
   var COMIC_URL='comic/Asa.HTML';
   var OC_URL='OC/Character/characters.html';
+  var IDX=[];
 
-  IDX.push({tag:'Comic',text:'Asa!',keys:['asa','아사','만화'],url:COMIC_URL});
-  if(typeof EPISODES!=='undefined'){
-    EPISODES.forEach(function(ep){
+  function buildIndex(episodes, characters){
+    IDX=[];
+    IDX.push({tag:'Comic',text:'Asa!',keys:['asa','아사','만화'],url:COMIC_URL});
+    (episodes||[]).forEach(function(ep){
       IDX.push({tag:'Comic',text:ep.title,keys:[ep.title.toLowerCase()].concat(ep.alias||[]),url:COMIC_URL});
     });
-  }
-  if(typeof CHARACTERS!=='undefined'){
-    Object.keys(CHARACTERS).forEach(function(key){
-      var ch=CHARACTERS[key];
+    Object.keys(characters||{}).forEach(function(key){
+      var ch=characters[key];
       IDX.push({tag:'OC',text:ch.title,keys:[ch.title.toLowerCase(),key.toLowerCase()].concat(ch.alias||[]),url:OC_URL+'?char='+key+'&item=0'});
       (ch.items||[]).forEach(function(item,i){
         IDX.push({tag:'OC',text:ch.title+' \u2014 '+item.label,keys:[item.label.toLowerCase()].concat(item.alias||[]),url:OC_URL+'?char='+key+'&item='+i});
       });
     });
+    var seen={};
+    IDX=IDX.filter(function(e){if(seen[e.url])return false;seen[e.url]=1;return true;});
   }
+
+  /* 로컬 fallback 즉시 빌드 */
+  var localEpisodes = (typeof EPISODES!=='undefined') ? EPISODES : [];
+  var localChars = (typeof CHARACTERS!=='undefined') ? CHARACTERS : {};
+  buildIndex(localEpisodes, localChars);
+
+  /* API에서 최신 에피소드 보강 */
+  fetch(API+'/api/episodes').then(function(r){return r.json();}).then(function(eps){
+    if(eps&&eps.length) buildIndex(eps, localChars);
+  }).catch(function(){});
 
   function doMatch(e,q){
     var ql=q.toLowerCase();
@@ -487,7 +452,6 @@ function playGlitchSound(){
     }
     box.style.display='block';
   }
-
   var prevLen=0;
   inp.addEventListener('input',function(){
     var cur=this.value.length;
@@ -510,12 +474,29 @@ function playGlitchSound(){
   var popup=document.getElementById('charPopup');
   var wrap=document.getElementById('charPopupWrap');
   if(!popup||!wrap)return;
-  if(typeof CHARACTERS!=='undefined'){
-    var OC_URL='OC/Character/characters.html';
-    popup.innerHTML=Object.keys(CHARACTERS).map(function(key){
-      return '<a href="'+OC_URL+'?char='+key+'&item=0">'+CHARACTERS[key].title+'</a>';
+  var OC_URL='OC/Character/characters.html';
+
+  function renderDropdown(items){
+    popup.innerHTML=items.map(function(item){
+      return '<a href="'+item.url+'">'+item.label+'</a>';
     }).join('');
   }
+
+  /* 로컬 fallback */
+  if(typeof CHARACTERS!=='undefined'){
+    renderDropdown(Object.keys(CHARACTERS).map(function(key){
+      return {label:CHARACTERS[key].title,url:OC_URL+'?char='+key+'&item=0'};
+    }));
+  }
+
+  /* API에서 최신 캐릭터 목록 */
+  fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(chars){
+    if(!chars||!chars.length)return;
+    renderDropdown(chars.map(function(ch){
+      return {label:ch.name,url:OC_URL+'?char='+ch.id+'&item=0'};
+    }));
+  }).catch(function(){});
+
   var timer=null;
   function openP(){clearTimeout(timer);popup.classList.add('open');}
   function closeP(){timer=setTimeout(function(){popup.classList.remove('open');},280);}
@@ -579,12 +560,11 @@ function renderRecent(){
 }
 renderRecent();
 
-/* 링크 클릭 시 최근 기록 저장 */
 document.addEventListener('click',function(e){
   var a=e.target.closest('a[href]');
   if(!a)return;
   var href=a.getAttribute('href');
-  if(!href||href.startsWith('http')||href.startsWith('#'))return;  /* 외부링크·앵커 제외 */
+  if(!href||href.startsWith('http')||href.startsWith('#'))return;
   var text=a.textContent.trim().replace(/[▼▾▾▸]/g,'').trim();
   var tag='Link';
   if(href.indexOf('comic')!==-1)tag='Comic';
@@ -612,7 +592,6 @@ document.addEventListener('click',function(e){
         +arrow
         +'</'+tag+'>';
     }).join('');
-    /* 배지 */
     var last=localStorage.getItem('lw103_last_visit')||'0';
     var newest=(items[0]||{}).date||'';
     function toN(d){return parseInt(d.replace(/\./g,''),10);}
@@ -623,8 +602,10 @@ document.addEventListener('click',function(e){
     }
     localStorage.setItem('lw103_last_visit',newest);
   }
+  /* 즉시 fallback 렌더 */
   renderNews(FALLBACK);
-  fetch('news.json').then(function(r){return r.json();})
+  /* API에서 최신 뉴스 (우선순위 높음) */
+  fetch(API+'/api/news').then(function(r){return r.json();})
     .then(function(d){if(d&&d.length)renderNews(d);}).catch(function(){});
 })();
 </script>

@@ -23,8 +23,6 @@
       overflow-x: hidden;
     }
     #particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-
-    /* ── 커서 ── */
     * { cursor: none !important; }
     #cursor-dot {
       position: fixed; width: 7px; height: 7px;
@@ -40,17 +38,12 @@
       transform: translate(-50%,-50%);
       transition: width 0.2s, height 0.2s, border-color 0.2s, opacity 0.4s;
     }
-
-    /* ── 진행도 바 ── */
     #progress-bar {
       position: fixed; top: 0; left: 0; height: 3px; width: 0%;
       background: linear-gradient(90deg,#0a4a50,#2fd3e0,#7ff7ff);
       z-index: 9999; box-shadow: 0 0 8px rgba(47,211,224,0.7);
       transition: width 0.1s linear; pointer-events: none;
     }
-
-    /* ── fixed 화살표 ── */
-    /* ── 상단 고정 버튼 바 (◀ ▶ + 토글) ── */
     .arrow-fixed {
       position: fixed; top: 24px; left: 24px;
       display: flex; gap: 0; z-index: 200;
@@ -62,7 +55,7 @@
       cursor: pointer; font-size: 0.92rem;
       transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
       backdrop-filter: blur(4px);
-      margin-right: -1px; /* 버튼 사이 테두리 겹침 제거 */
+      margin-right: -1px;
     }
     #sidebarToggle {
       color: var(--muted);
@@ -75,8 +68,6 @@
       box-shadow: 0 0 8px rgba(47,211,224,0.2);
       color: #fff; z-index: 1; position: relative;
     }
-
-    /* ── 컨테이너 ── */
     .container {
       position: relative; z-index: 1;
       max-width: 1200px; margin: 0 auto;
@@ -98,8 +89,6 @@
       transition: border-color 0.2s, color 0.2s;
     }
     .top a:hover { border-color: var(--accent); color: #fff; }
-
-    /* ── 메인 레이아웃 ── */
     .comic-layout {
       display: grid;
       grid-template-columns: 200px 1fr;
@@ -109,8 +98,6 @@
     .comic-layout.sidebar-hidden {
       grid-template-columns: 0px 1fr;
     }
-
-    /* ── 사이드바 ── */
     .sidebar {
       display: flex; flex-direction: column; gap: 8px;
       overflow: hidden;
@@ -143,8 +130,6 @@
       border-color: var(--accent);
       background: rgba(47,211,224,0.12);
     }
-
-    /* ── 뷰어 ── */
     .viewer { display: flex; flex-direction: column; gap: 12px; }
     .viewer-title {
       color: #bdfcff; font-size: 1rem;
@@ -158,8 +143,6 @@
     .webtoon-strip img {
       width: 100%; height: auto; display: block;
       content-visibility: auto;
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
     }
     .viewer-placeholder {
       width: 100%; min-height: 400px;
@@ -174,14 +157,11 @@
       border-top: 1px solid var(--line); margin-top: 8px;
       letter-spacing: 0.08em;
     }
-
-    /* ── 모바일 반응형 ── */
     @media (max-width: 640px) {
       .arrow-fixed { top: 14px; left: 14px; }
       .container { padding: 60px 12px 60px; }
       .comic-layout { grid-template-columns: 0px 1fr !important; }
       .sidebar { opacity: 0 !important; pointer-events: none !important; }
-      /* 모바일에선 사이드바 오버레이로 펼침 */
       .comic-layout.mobile-open { grid-template-columns: 160px 1fr !important; }
       .comic-layout.mobile-open .sidebar { opacity: 1 !important; pointer-events: auto !important; }
     }
@@ -195,15 +175,15 @@
 <canvas id="particles"></canvas>
 
 <div class="arrow-fixed">
-  <button class="arrow-btn" id="prevBtn">◀</button>
-  <button class="arrow-btn" id="nextBtn">▶</button>
-  <button id="sidebarToggle" title="사이드바 열기/닫기">☰ EP</button>
+  <button class="arrow-btn" id="prevBtn">&#9664;</button>
+  <button class="arrow-btn" id="nextBtn">&#9654;</button>
+  <button id="sidebarToggle" title="사이드바 열기/닫기">&#9776; EP</button>
 </div>
 
 <div class="container">
   <div class="top">
     <h1>Asa!</h1>
-    <a href="../index.html">← Home</a>
+    <a href="../index.html">&#8592; Home</a>
   </div>
   <div class="comic-layout" id="comicLayout">
     <div class="sidebar">
@@ -211,14 +191,16 @@
       <div id="episodeList"></div>
     </div>
     <div class="viewer">
-      <div class="viewer-title" id="viewerTitle">Episode 1 — Intro</div>
+      <div class="viewer-title" id="viewerTitle">Loading...</div>
       <div class="webtoon-strip" id="webtoonStrip"></div>
-      <div class="copy">Copyright © Lawren103 | Commercial Use Prohibited.</div>
+      <div class="copy">Copyright &copy; Lawren103 | Commercial Use Prohibited.</div>
     </div>
   </div>
 </div>
 
 <script>
+var API = 'https://test-site-f14v.onrender.com';
+
 /* ── 파티클 ── */
 (function(){
   var c=document.getElementById('particles'),ctx=c.getContext('2d');
@@ -262,9 +244,8 @@ window.addEventListener('scroll',function(){
 /* ── 사이드바 토글 ── */
 var layout=document.getElementById('comicLayout');
 var toggleBtn=document.getElementById('sidebarToggle');
-var sidebarOpen = window.innerWidth > 640; // 데스크탑이면 기본 열림
+var sidebarOpen = window.innerWidth > 640;
 if(!sidebarOpen) layout.classList.add('sidebar-hidden');
-
 toggleBtn.addEventListener('click',function(){
   var isMobile = window.innerWidth <= 640;
   if(isMobile){
@@ -275,43 +256,78 @@ toggleBtn.addEventListener('click',function(){
   }
 });
 
-/* ── 에피소드 전환 ── */
+/* ── 에피소드 시스템 ── */
 var listEl=document.getElementById('episodeList');
-if(typeof EPISODES!=='undefined'&&listEl){
-  EPISODES.forEach(function(ep,i){
+var viewerTitleEl=document.getElementById('viewerTitle');
+var webtoonStripEl=document.getElementById('webtoonStrip');
+var episodeData=[];
+var currentIndex=0;
+
+function renderEpisodeList(episodes){
+  episodeData=episodes;
+  listEl.innerHTML='';
+  episodes.forEach(function(ep,i){
     var btn=document.createElement('button');
     btn.className='chapter-btn'+(i===0?' active':'');
-    btn.dataset.title=ep.title;
-    btn.dataset.images=JSON.stringify(ep.images);
-    btn.textContent=ep.label;
+    btn.textContent=ep.label||ep.title;
+    btn.addEventListener('click',function(){showEpisode(i);});
     listEl.appendChild(btn);
   });
 }
-var episodeButtons=Array.from(document.querySelectorAll('.chapter-btn'));
-var viewerTitleEl=document.getElementById('viewerTitle');
-var webtoonStripEl=document.getElementById('webtoonStrip');
-var currentIndex=0;
 
 function showEpisode(index){
-  currentIndex=(index+episodeButtons.length)%episodeButtons.length;
-  episodeButtons.forEach(function(btn,i){btn.classList.toggle('active',i===currentIndex);});
-  var btn=episodeButtons[currentIndex];
-  viewerTitleEl.textContent=btn.dataset.title;
-  var imgs=[];
-  try{imgs=JSON.parse(btn.dataset.images||'[]');}catch(e){}
+  var buttons=listEl.querySelectorAll('.chapter-btn');
+  currentIndex=(index+episodeData.length)%episodeData.length;
+  buttons.forEach(function(btn,i){btn.classList.toggle('active',i===currentIndex);});
+  var ep=episodeData[currentIndex];
+  viewerTitleEl.textContent=ep.title;
+
+  /* images 배열: API는 pages 배열로, 로컬은 images 배열로 */
+  var imgs=ep.pages||ep.images||[];
   if(imgs.length>0){
-    webtoonStripEl.innerHTML=imgs.map(function(src){return '<img src="'+src+'" alt="" loading="lazy"/>';}).join('');
+    webtoonStripEl.innerHTML=imgs.map(function(src){
+      /* API에서 오는 경우 src는 Cloudinary URL, 로컬은 상대경로 */
+      return '<img src="'+src+'" alt="" loading="lazy"/>';
+    }).join('');
   } else {
     webtoonStripEl.innerHTML='<div class="viewer-placeholder">준비중입니다.</div>';
   }
   window.scrollTo({top:0,behavior:'smooth'});
-  // 모바일에선 에피소드 선택 후 사이드바 자동 닫기
   if(window.innerWidth<=640) layout.classList.remove('mobile-open');
 }
-episodeButtons.forEach(function(btn,i){btn.addEventListener('click',function(){showEpisode(i);});});
+
+/* 로컬 fallback 먼저 */
+if(typeof EPISODES!=='undefined'&&EPISODES.length){
+  renderEpisodeList(EPISODES);
+  showEpisode(0);
+} else {
+  viewerTitleEl.textContent='Loading...';
+}
+
+/* API에서 최신 에피소드 */
+fetch(API+'/api/episodes').then(function(r){return r.json();}).then(function(eps){
+  if(!eps||!eps.length)return;
+  /* API 응답을 로컬 포맷으로 변환 */
+  var converted=eps.map(function(ep){
+    return {
+      id: ep.id,
+      title: ep.title,
+      label: ep.title,
+      pages: (ep.pages||[]).map(function(p){return p.image_url||p;})
+    };
+  });
+  renderEpisodeList(converted);
+  showEpisode(0);
+}).catch(function(){
+  /* API 실패시 로컬 유지 */
+  if(typeof EPISODES!=='undefined'&&EPISODES.length){
+    renderEpisodeList(EPISODES);
+    showEpisode(0);
+  }
+});
+
 document.getElementById('prevBtn').addEventListener('click',function(){showEpisode(currentIndex-1);});
 document.getElementById('nextBtn').addEventListener('click',function(){showEpisode(currentIndex+1);});
-showEpisode(0);
 </script>
 </body>
 </html>

@@ -21,8 +21,6 @@
     }
     a { color: inherit; text-decoration: none; }
     #particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
-
-    /* ── 커서 ── */
     * { cursor: none !important; }
     #cursor-dot {
       position: fixed; width: 7px; height: 7px;
@@ -38,14 +36,11 @@
       transform: translate(-50%,-50%);
       transition: width 0.2s, height 0.2s, border-color 0.2s;
     }
-
     .wrap {
       position: relative; z-index: 1;
       width: min(1100px, calc(100% - 40px));
       margin: 0 auto; padding: 32px 0 40px;
     }
-
-    /* ── 헤더 ── */
     .site-header {
       display: flex; align-items: center;
       justify-content: space-between;
@@ -65,11 +60,9 @@
     .back-btn:hover { border-color: var(--accent); box-shadow: 0 0 12px rgba(47,211,224,.28); transform: translateY(-1px); }
     .page-title { font-size: 1.4rem; letter-spacing: 0.12em; text-transform: uppercase; }
     .copyright { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.12em; white-space: nowrap; }
-
-    /* ── 사이드바 토글 버튼 ── */
     #sidebarToggle {
       border: 1px solid var(--line);
-      border-left: none; /* back-btn과 이어 보이도록 */
+      border-left: none;
       background: linear-gradient(135deg,#0f2f33,#07171a);
       color: var(--muted); padding: 7px 14px;
       cursor: pointer; font-size: 0.85rem;
@@ -78,8 +71,6 @@
       white-space: nowrap;
     }
     #sidebarToggle:hover { border-color: var(--accent); color: #bdfcff; box-shadow: 0 0 10px rgba(47,211,224,.2); }
-
-    /* ── 레이아웃 ── */
     .layout {
       display: grid;
       grid-template-columns: 200px 1fr;
@@ -87,8 +78,6 @@
       transition: grid-template-columns 0.3s ease;
     }
     .layout.sidebar-hidden { grid-template-columns: 0px 1fr; }
-
-    /* ── 사이드바 ── */
     .sidebar {
       display: flex; flex-direction: column; gap: 16px;
       overflow: hidden;
@@ -125,8 +114,6 @@
     .thumb-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
     .thumb-image { width: 100%; aspect-ratio: 1; background: rgba(94,242,255,.08) center/cover no-repeat; border: 1px solid rgba(94,242,255,.1); }
     .thumb-label { font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-align: center; }
-
-    /* ── 뷰어 (기본: 가로 2단) ── */
     .viewer {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -146,17 +133,13 @@
     }
     .info-pane h2 { font-size: 1.1rem; color: #bdfcff; letter-spacing: 0.06em; }
     .info-pane p { color: var(--muted); line-height: 1.9; white-space: pre-line; font-size: 0.9rem; }
-
-    /* ── 모바일 반응형 ── */
     @media (max-width: 640px) {
       .wrap { width: calc(100% - 24px); padding: 20px 0 40px; }
       .copyright { display: none; }
-      /* 사이드바 기본 닫힘 */
       .layout { grid-template-columns: 0px 1fr !important; }
       .sidebar { opacity: 0 !important; pointer-events: none !important; }
       .layout.mobile-open { grid-template-columns: 160px 1fr !important; }
       .layout.mobile-open .sidebar { opacity: 1 !important; pointer-events: auto !important; }
-      /* 뷰어: 가로→세로 변경 (이미지 위, 설명 아래) */
       .viewer { grid-template-columns: 1fr !important; }
       .viewer-frame { min-height: 200px; }
       .info-pane { min-height: auto; }
@@ -172,11 +155,11 @@
 <div class="wrap">
   <div class="site-header">
     <div style="display:flex;gap:0;align-items:stretch;">
-      <a class="back-btn" href="../../index.html">← Back</a>
-      <button id="sidebarToggle">☰ Nav</button>
+      <a class="back-btn" href="../../index.html">&#8592; Back</a>
+      <button id="sidebarToggle">&#9776; Nav</button>
     </div>
     <span class="page-title" id="pageTitle">Characters</span>
-    <span class="copyright">© Lawren103 — Commercial Use Prohibited</span>
+    <span class="copyright">&copy; Lawren103 &mdash; Commercial Use Prohibited</span>
   </div>
 
   <div class="layout" id="charLayout">
@@ -205,6 +188,8 @@
 </div>
 
 <script>
+var API = 'https://test-site-f14v.onrender.com';
+
 /* ── 파티클 ── */
 (function(){
   var c=document.getElementById('particles'),ctx=c.getContext('2d');
@@ -234,7 +219,6 @@ var charLayout=document.getElementById('charLayout');
 var toggleBtn=document.getElementById('sidebarToggle');
 var sidebarOpen=window.innerWidth>640;
 if(!sidebarOpen)charLayout.classList.add('sidebar-hidden');
-
 toggleBtn.addEventListener('click',function(){
   var isMobile=window.innerWidth<=640;
   if(isMobile){
@@ -245,8 +229,7 @@ toggleBtn.addEventListener('click',function(){
   }
 });
 
-/* ── 캐릭터 로드 ── */
-var currentChar='Asa';
+/* ── 캐릭터 시스템 ── */
 var charNav=document.getElementById('charNav');
 var thumbList=document.getElementById('thumbList');
 var mainImage=document.getElementById('mainImage');
@@ -255,53 +238,96 @@ var detailTitle=document.getElementById('detailTitle');
 var detailText=document.getElementById('detailText');
 var pageTitle=document.getElementById('pageTitle');
 
+/* 현재 로드된 캐릭터 데이터 */
+var CHAR_DB = {};   /* key -> {title, items:[{label,title,text,image,thumb}]} */
+var currentKey = null;
+var currentItemIdx = 0;
+
+function selectItem(idx){
+  var ch=CHAR_DB[currentKey];
+  if(!ch)return;
+  currentItemIdx=idx;
+  var items=ch.items||[];
+  /* 썸네일 활성 */
+  thumbList.querySelectorAll('.thumb-btn').forEach(function(b,i){b.classList.toggle('active',i===idx);});
+  var item=items[idx];
+  if(!item){detailTitle.textContent='—';detailText.textContent='';return;}
+  detailTitle.textContent=item.title||item.label;
+  detailText.textContent=item.text||'';
+  var src=item.image||item.thumb||'';
+  if(src){mainImage.src=src;mainImage.style.display='';noImg.style.display='none';}
+  else{mainImage.style.display='none';noImg.style.display='';}
+}
+
 function loadCharacter(key){
-  currentChar=key;
-  var ch=CHARACTERS[key];
+  currentKey=key;
+  var ch=CHAR_DB[key];
+  if(!ch)return;
   pageTitle.textContent=ch.title;
-  charNav.querySelectorAll('.char-nav-btn').forEach(function(b){b.classList.toggle('active',b.dataset.key===key);});
-  thumbList.innerHTML='';
-  ch.items.forEach(function(item,i){
-    var btn=document.createElement('button');
-    btn.className='thumb-btn'+(i===0?' active':'');
-    btn.innerHTML='<div class="thumb-image" style="background-image:url(\''+( item.thumb||item.image)+'\')" ></div><span class="thumb-label">'+item.label+'</span>';
-    btn.addEventListener('click',function(){selectItem(i);});
-    thumbList.appendChild(btn);
+  /* 캐릭터 nav 활성 */
+  charNav.querySelectorAll('.char-nav-btn').forEach(function(b){
+    b.classList.toggle('active',b.dataset.key===key);
+  });
+  /* 썸네일 렌더 */
+  var items=ch.items||[];
+  thumbList.innerHTML=items.map(function(item,i){
+    var bg=item.thumb||item.image||'';
+    return '<button class="thumb-btn" data-idx="'+i+'">'
+      +'<div class="thumb-image"'+(bg?' style="background-image:url(\''+bg+'\')"':'')+'></div>'
+      +'<span class="thumb-label">'+item.label+'</span>'
+      +'</button>';
+  }).join('');
+  thumbList.querySelectorAll('.thumb-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){selectItem(parseInt(btn.dataset.idx,10));});
   });
   selectItem(0);
 }
 
-function selectItem(index){
-  var item=CHARACTERS[currentChar].items[index];
-  var src=item.image;
-  mainImage.src=src;
-  mainImage.style.display=src?'block':'none';
-  noImg.style.display=src?'none':'block';
-  detailTitle.textContent=item.title;
-  detailText.textContent=item.text;
-  thumbList.querySelectorAll('.thumb-btn').forEach(function(b,i){b.classList.toggle('active',i===index);});
-  // 모바일: 아이템 선택 후 사이드바 닫기
-  if(window.innerWidth<=640)charLayout.classList.remove('mobile-open');
-}
-
-Object.keys(CHARACTERS).forEach(function(key){
-  var btn=document.createElement('button');
-  btn.className='char-nav-btn';
-  btn.dataset.key=key;
-  btn.textContent=CHARACTERS[key].title;
-  btn.addEventListener('click',function(){loadCharacter(key);});
-  charNav.appendChild(btn);
-});
-
-/* ── URL 파라미터 ── */
-(function(){
-  var params=new URLSearchParams(window.location.search);
+function buildFromData(db){
+  CHAR_DB=db;
+  charNav.innerHTML=Object.keys(db).map(function(key){
+    return '<button class="char-nav-btn" data-key="'+key+'">'+db[key].title+'</button>';
+  }).join('');
+  charNav.querySelectorAll('.char-nav-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){loadCharacter(btn.dataset.key);});
+  });
+  /* URL 파라미터로 초기 캐릭터 선택 */
+  var params=new URLSearchParams(location.search);
   var charParam=params.get('char');
   var itemParam=parseInt(params.get('item')||'0',10);
-  var key=(charParam&&CHARACTERS[charParam])?charParam:Object.keys(CHARACTERS)[0];
+  var key=(charParam&&db[charParam])?charParam:Object.keys(db)[0];
   loadCharacter(key);
   setTimeout(function(){selectItem(isNaN(itemParam)?0:itemParam);},0);
-})();
+}
+
+/* 로컬 fallback 즉시 사용 */
+if(typeof CHARACTERS!=='undefined'){
+  buildFromData(CHARACTERS);
+}
+
+/* API에서 최신 캐릭터 데이터 */
+fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(chars){
+  if(!chars||!chars.length)return;
+  /* API 응답을 로컬 포맷으로 변환 */
+  var db={};
+  chars.forEach(function(ch){
+    db[ch.id]={
+      title: ch.name,
+      items: (ch.profiles||[]).map(function(p){
+        return {
+          label: p.label||p.name||'Base',
+          title: p.title||p.name||'Base',
+          text: p.description||p.text||'',
+          image: p.image_url||p.image||'',
+          thumb: p.thumb_url||p.thumb||p.image_url||p.image||''
+        };
+      })
+    };
+  });
+  if(Object.keys(db).length) buildFromData(db);
+}).catch(function(){
+  /* API 실패 시 로컬 유지 (이미 렌더됨) */
+});
 </script>
 </body>
 </html>
