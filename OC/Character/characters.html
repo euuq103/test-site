@@ -392,7 +392,7 @@ fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(w
         title: ch.name,
         text:  ch.description||'',
         image: ch.image_url||ch.main_url||'',
-        thumb: ch.thumb_url||ch.image_url||''
+        thumb: ch.thumb_url||''   /* 얼굴 이미지만, 없으면 빈값 */
       });
     });
   });

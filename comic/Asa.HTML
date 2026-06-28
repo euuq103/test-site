@@ -325,35 +325,45 @@ if(localEps.length){
   viewerTitleEl.textContent='Loading...';
 }
 
-/* API에서 세계관 필터된 에피소드 */
+/* API에서 전체 에피소드 가져온 뒤 프론트에서 세계관 필터 */
 (function(){
-  var url = API+'/api/episodes';
-  /* world_id 로 필터하려면 먼저 worlds 목록 가져와서 매핑 */
-  fetch(API+'/api/worlds').then(function(r){return r.json();}).then(function(worlds){
-    var targetWorld = worlds.find(function(w){
-      return w.name.toLowerCase()===(WORLD_PARAM||'').toLowerCase();
-    });
-    var fetchUrl = targetWorld
-      ? API+'/api/episodes?world_id='+targetWorld.id
-      : API+'/api/episodes';
-    return fetch(fetchUrl);
-  }).then(function(r){return r.json();}).then(function(eps){
+  fetch(API+'/api/episodes').then(function(r){return r.json();}).then(function(eps){
     if(!eps||!eps.length) return;
-    var converted=eps.map(function(ep){
-      return {
-        id: ep.id,
-        title: ep.title,
-        label: ep.title,
-        pages: (ep.pages||[]).map(function(p){return p.image_url||p;})
-      };
-    });
-    renderEpisodeList(converted);
-    showEpisode(0);
-  }).catch(function(){
-    /* API 실패 — 로컬 유지 */
-    if(!localEps.length && typeof EPISODES!=='undefined'){
-      renderEpisodeList(EPISODES);
+    /* world_name 매핑을 위해 worlds도 가져옴 */
+    fetch(API+'/api/worlds').then(function(r2){return r2.json();}).then(function(worlds){
+      /* world_id -> name 맵 */
+      var worldMap={};
+      (worlds||[]).forEach(function(w){ worldMap[w.id]=w.name; });
+      /* 세계관 필터 */
+      var filtered = WORLD_PARAM
+        ? eps.filter(function(ep){
+            var wname = (worldMap[ep.world_id]||'').toLowerCase();
+            return wname === WORLD_PARAM.toLowerCase();
+          })
+        : eps;
+      if(!filtered.length) filtered = eps; /* 매칭 없으면 전체 표시 */
+      var converted = filtered.map(function(ep){
+        return {
+          id:    ep.id,
+          title: ep.title,
+          label: ep.title,
+          pages: (ep.pages||[]).map(function(p){ return p.image_url||p; })
+        };
+      });
+      renderEpisodeList(converted);
       showEpisode(0);
+    }).catch(function(){
+      /* worlds 실패 — 필터 없이 전체 */
+      var converted = eps.map(function(ep){
+        return { id:ep.id, title:ep.title, label:ep.title,
+                 pages:(ep.pages||[]).map(function(p){return p.image_url||p;}) };
+      });
+      renderEpisodeList(converted);
+      showEpisode(0);
+    });
+  }).catch(function(){
+    if(!localEps.length && typeof EPISODES!=='undefined'){
+      renderEpisodeList(EPISODES); showEpisode(0);
     }
   });
 })();
