@@ -94,6 +94,16 @@
       margin-bottom: 10px;
     }
     .char-nav-list { display: grid; gap: 7px; }
+    .world-nav-btn {
+      display: block; width: 100%; text-align: left;
+      padding: 8px 10px; margin-bottom: 4px;
+      background: none; border: 1px solid #17353a;
+      color: #5ef2ff; font-size: .8rem; letter-spacing: .08em;
+      cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+    }
+    .world-nav-btn:hover { background: rgba(47,211,224,.06); border-color: #2fd3e0; }
+    .world-nav-btn.active { background: rgba(47,211,224,.12); border-color: #2fd3e0; color:#fff; font-weight:600; }
+    .char-section { margin-top: 6px; padding-top: 6px; border-top: 1px solid #17353a; }
     .char-nav-btn {
       display: block; padding: 8px 10px;
       border: 1px solid var(--line); background: #0b0b0b;
@@ -274,58 +284,103 @@ function loadCharacter(key){
   var ch=CHAR_DB[key];
   if(!ch)return;
   pageTitle.textContent=ch.title;
-  /* 캐릭터 nav 활성 */
-  charNav.querySelectorAll('.char-nav-btn').forEach(function(b){
-    b.classList.toggle('active',b.dataset.key===key);
+  /* thumbList 캐릭터 버튼 active 동기화 */
+  thumbList.querySelectorAll('.thumb-btn[data-key]').forEach(function(b){
+    b.classList.toggle('active', b.dataset.key===key);
   });
-  /* 썸네일 렌더 */
+  /* 첫 번째 프로필 아이템 메인뷰에 표시 */
+  currentItemIdx=0;
   var items=ch.items||[];
-  thumbList.innerHTML=items.map(function(item,i){
-    var bg=item.thumb||item.image||'';
-    return '<button class="thumb-btn" data-idx="'+i+'">'
-      +'<div class="thumb-image"'+(bg?' style="background-image:url(\''+bg+'\')"':'')+'></div>'
-      +'<span class="thumb-label">'+item.label+'</span>'
-      +'</button>';
-  }).join('');
-  thumbList.querySelectorAll('.thumb-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){selectItem(parseInt(btn.dataset.idx,10));});
-  });
-  selectItem(0);
+  if(!items.length){
+    detailTitle.textContent=ch.title;
+    detailText.textContent='';
+    mainImage.style.display='none'; noImg.style.display='';
+    return;
+  }
+  var item=items[0];
+  detailTitle.textContent=item.title||item.label||ch.title;
+  detailText.textContent=item.text||'';
+  var src=item.image||item.thumb||'';
+  if(src){mainImage.src=src;mainImage.style.display='';noImg.style.display='none';}
+  else{mainImage.style.display='none';noImg.style.display='';}
 }
 
-function buildFromData(db){
-  CHAR_DB=db;
-  var html = '';
+/* ── 2단계 네비: WORLD섹션(charNav) + PROFILE섹션(thumbList) ── */
+var WORLD_GROUPS = {};   /* { worldName: [dbKey, ...] } */
+var WORLD_ORDER  = [];
 
-  /* db 키를 world 값 기준으로 그룹핑 */
-  var worldGroups = {};  /* { worldLabel: [key, key, ...] } */
-  var worldOrder  = [];  /* 순서 보존 */
+function buildFromData(db){
+  CHAR_DB = db;
+  WORLD_GROUPS = {};
+  WORLD_ORDER  = [];
+
   Object.keys(db).forEach(function(key){
     var wLabel = db[key].world || '기타';
-    if(!worldGroups[wLabel]){ worldGroups[wLabel]=[]; worldOrder.push(wLabel); }
-    worldGroups[wLabel].push(key);
+    if(!WORLD_GROUPS[wLabel]){ WORLD_GROUPS[wLabel]=[]; WORLD_ORDER.push(wLabel); }
+    WORLD_GROUPS[wLabel].push(key);
   });
 
-  worldOrder.forEach(function(wLabel){
-    html += '<div class="world-group">';
-    html += '<div class="world-label">'+wLabel+'</div>';
-    worldGroups[wLabel].forEach(function(key){
-      html += '<button class="char-nav-btn" data-key="'+key+'">'+db[key].title+'</button>';
-    });
-    html += '</div>';
+  /* WORLD 섹션: 세계관 버튼 목록 (charNav) */
+  var html = '';
+  WORLD_ORDER.forEach(function(wLabel){
+    html += '<button class="world-nav-btn" data-world="'+wLabel+'">'+wLabel+'</button>';
   });
-
   charNav.innerHTML = html;
-  charNav.querySelectorAll('.char-nav-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){loadCharacter(btn.dataset.key);});
+  charNav.querySelectorAll('.world-nav-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      charNav.querySelectorAll('.world-nav-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      /* PROFILE 섹션: 해당 세계관 캐릭터 썸네일로 교체 */
+      loadWorldChars(btn.dataset.world);
+    });
   });
-  /* 초기 캐릭터 선택 */
-  var params=new URLSearchParams(location.search);
-  var charParam=params.get('char');
-  var itemParam=parseInt(params.get('item')||'0',10);
-  var key=(charParam&&db[charParam])?charParam:Object.keys(db)[0];
-  loadCharacter(key);
-  setTimeout(function(){selectItem(isNaN(itemParam)?0:itemParam);},0);
+
+  /* 초기 선택 */
+  var params    = new URLSearchParams(location.search);
+  var charParam = params.get('char');
+  var itemParam = parseInt(params.get('item')||'0', 10);
+
+  if(charParam && db[charParam]){
+    var wOf = db[charParam].world || WORLD_ORDER[0];
+    activateWorld(wOf);
+    loadCharacter(charParam);
+    setTimeout(function(){ selectItem(isNaN(itemParam)?0:itemParam); }, 0);
+  } else {
+    /* 첫 세계관 자동 선택 */
+    if(WORLD_ORDER.length) activateWorld(WORLD_ORDER[0]);
+  }
+}
+
+/* 세계관 버튼 활성화 + PROFILE 갱신 */
+function activateWorld(wLabel){
+  charNav.querySelectorAll('.world-nav-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.world === wLabel);
+  });
+  loadWorldChars(wLabel);
+}
+
+/* PROFILE 섹션(thumbList)에 해당 세계관 캐릭터 버튼 렌더 */
+function loadWorldChars(wLabel){
+  var keys = WORLD_GROUPS[wLabel] || [];
+  thumbList.innerHTML = keys.map(function(key, i){
+    var item = CHAR_DB[key];
+    var img  = item.items && item.items[0] && item.items[0].thumb
+               ? '<img src="'+item.items[0].thumb+'" alt="'+item.title+'">'
+               : '';
+    return '<button class="thumb-btn'+(i===0?' active':'')+'" data-key="'+key+'">'
+           + img
+           + '<span class="thumb-label">'+item.title+'</span>'
+           + '</button>';
+  }).join('');
+  thumbList.querySelectorAll('.thumb-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      thumbList.querySelectorAll('.thumb-btn').forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      loadCharacter(btn.dataset.key);
+    });
+  });
+  /* 첫 캐릭터 자동 표시 */
+  if(keys.length) loadCharacter(keys[0]);
 }
 
 /* 세계관 타이틀 설정 */
