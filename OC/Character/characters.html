@@ -144,6 +144,14 @@
       .viewer-frame { min-height: 200px; }
       .info-pane { min-height: auto; }
     }
+
+    .world-group { margin-bottom: 6px; }
+    .world-label {
+      font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--muted); padding: 8px 10px 4px; opacity: 0.7;
+      border-top: 1px solid var(--line); margin-top: 4px;
+    }
+    .world-group:first-child .world-label { border-top: none; margin-top: 0; }
   </style>
   <script src="../../characters.js"></script>
 </head>
@@ -188,6 +196,7 @@
 </div>
 
 <script>
+var API = 'https://test-site-f14v.onrender.com';
 
 /* ── 파티클 ── */
 (function(){
@@ -202,10 +211,8 @@
 
 /* ── 커서 ── */
 (function(){
-  if('ontouchstart' in window){document.body.style.cursor='';return;}
   var dot=document.getElementById('cursor-dot'),ring=document.getElementById('cursor-ring');
-  var mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
-  dot.style.left=mx+'px';dot.style.top=my+'px';
+  var mx=0,my=0,rx=0,ry=0;
   document.addEventListener('mousemove',function(e){
     mx=e.clientX;my=e.clientY;
     dot.style.left=mx+'px';dot.style.top=my+'px';
@@ -284,89 +291,80 @@ function loadCharacter(key){
   selectItem(0);
 }
 
-/* ── WORLD_DB: [{world_name, characters:[{name,description,image_url}]}] ── */
-var WORLD_DB = [];
-var currentWorld = null;
+function buildFromData(db){
+  CHAR_DB=db;
+  /* WORLDS 기준으로 그룹핑 */
+  var worlds = (typeof WORLDS !== 'undefined') ? WORLDS : {};
+  var worldKeys = Object.keys(worlds);
+  var html = '';
 
-function renderWorldNav(){
-  charNav.innerHTML = WORLD_DB.map(function(w){
-    return '<button class="char-nav-btn" data-world="'+w.world_name+'">'+w.world_name+'</button>';
-  }).join('');
-  charNav.querySelectorAll('.char-nav-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      selectWorld(btn.dataset.world);
+  if(worldKeys.length > 0){
+    /* 세계관별 그룹 헤더 + 캐릭터 버튼 */
+    worldKeys.forEach(function(wKey){
+      var wChars = Object.keys(db).filter(function(k){ return db[k].world === wKey; });
+      if(!wChars.length) return;
+      html += '<div class="world-group">';
+      html += '<div class="world-label">'+worlds[wKey].title+'</div>';
+      wChars.forEach(function(key){
+        html += '<button class="char-nav-btn" data-key="'+key+'">'+db[key].title+'</button>';
+      });
+      html += '</div>';
     });
-  });
-}
-
-function selectWorld(worldName){
-  currentWorld = worldName;
-  /* World 버튼 활성 표시 */
-  charNav.querySelectorAll('.char-nav-btn').forEach(function(b){
-    b.classList.toggle('active', b.dataset.world === worldName);
-  });
-  /* Profile 섹션에 해당 World 캐릭터 버튼 렌더 */
-  var world = WORLD_DB.find(function(w){return w.world_name===worldName;});
-  var chars = (world && world.characters) || [];
-  thumbList.innerHTML = chars.map(function(ch, i){
-    var bg = ch.thumb_url || ch.image_url || '';
-    return '<button class="thumb-btn" data-idx="'+i+'">'
-      +'<div class="thumb-image"'+(bg?' style="background-image:url(''+bg+'')"':'')+'></div>'
-      +'<span class="thumb-label">'+ch.name+'</span>'
-      +'</button>';
-  }).join('');
-  thumbList.querySelectorAll('.thumb-btn').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      selectCharacter(worldName, parseInt(btn.dataset.idx,10));
-    });
-  });
-  /* 첫 번째 캐릭터 자동 선택 */
-  if(chars.length) selectCharacter(worldName, 0);
-  else {
-    detailTitle.textContent='—'; detailText.textContent='';
-    mainImage.style.display='none'; noImg.style.display='';
-  }
-}
-
-function selectCharacter(worldName, idx){
-  var world = WORLD_DB.find(function(w){return w.world_name===worldName;});
-  var chars = (world && world.characters) || [];
-  var ch = chars[idx];
-  /* Profile 버튼 활성 */
-  thumbList.querySelectorAll('.thumb-btn').forEach(function(b,i){
-    b.classList.toggle('active', i===idx);
-  });
-  if(!ch){ detailTitle.textContent='—'; detailText.textContent=''; return; }
-  detailTitle.textContent = ch.name;
-  detailText.textContent  = ch.description || '';
-  if(ch.image_url){ mainImage.src=ch.image_url; mainImage.style.display=''; noImg.style.display='none'; }
-  else { mainImage.style.display='none'; noImg.style.display=''; }
-}
-
-function buildFromAPI(worlds){
-  WORLD_DB = worlds;
-  renderWorldNav();
-  /* URL 파라미터로 초기 선택 */
-  var params = new URLSearchParams(location.search);
-  var worldParam = params.get('world') || (worlds[0]&&worlds[0].world_name);
-  var charParam  = params.get('char');
-  if(worldParam) selectWorld(worldParam);
-  /* char 파라미터로 특정 캐릭터 선택 */
-  if(charParam && worldParam){
-    var world = WORLD_DB.find(function(w){return w.world_name===worldParam;});
-    if(world){
-      var idx = (world.characters||[]).findIndex(function(c){return c.name===charParam;});
-      if(idx>=0) setTimeout(function(){selectCharacter(worldParam,idx);},0);
+    /* world 없는 캐릭터 fallback */
+    var noWorld = Object.keys(db).filter(function(k){ return !db[k].world; });
+    if(noWorld.length){
+      html += '<div class="world-group">';
+      html += '<div class="world-label">기타</div>';
+      noWorld.forEach(function(key){
+        html += '<button class="char-nav-btn" data-key="'+key+'">'+db[key].title+'</button>';
+      });
+      html += '</div>';
     }
+  } else {
+    /* WORLDS 없으면 기존 방식 */
+    Object.keys(db).forEach(function(key){
+      html += '<button class="char-nav-btn" data-key="'+key+'">'+db[key].title+'</button>';
+    });
   }
+
+  charNav.innerHTML = html;
+  charNav.querySelectorAll('.char-nav-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){loadCharacter(btn.dataset.key);});
+  });
+  /* URL 파라미터로 초기 캐릭터 선택 */
+  var params=new URLSearchParams(location.search);
+  var charParam=params.get('char');
+  var itemParam=parseInt(params.get('item')||'0',10);
+  var key=(charParam&&db[charParam])?charParam:Object.keys(db)[0];
+  loadCharacter(key);
+  setTimeout(function(){selectItem(isNaN(itemParam)?0:itemParam);},0);
 }
 
-/* characters.js 로컬 데이터로 바로 렌더 */
-window.addEventListener('load', function(){
-  buildFromAPI([{world_name:'Character', characters: Object.keys(CHARACTERS).map(function(k){
-    var ch=CHARACTERS[k]; var item=(ch.items&&ch.items[0])||{};
-    return {name:ch.title, description:item.text||'', image_url:item.thumb||item.image||''};
-  })}]);
+/* API 우선, 실패시 로컬 fallback */
+fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(worlds){
+  if(!worlds||!worlds.length){
+    if(typeof CHARACTERS!=='undefined') buildFromData(CHARACTERS);
+    return;
+  }
+  /* API 응답(World별 그룹) -> 로컬 포맷 변환 */
+  var db={};
+  worlds.forEach(function(w){
+    (w.characters||[]).forEach(function(ch){
+      var key='char_'+ch.id;
+      if(!db[w.world_name]) db[w.world_name]={title:w.world_name, items:[]};
+      db[w.world_name].items.push({
+        label: ch.name,
+        title: ch.name,
+        text:  ch.description||'',
+        image: ch.image_url||'',
+        thumb: ch.image_url||''
+      });
+    });
+  });
+  if(Object.keys(db).length) buildFromData(db);
+  else if(typeof CHARACTERS!=='undefined') buildFromData(CHARACTERS);
+}).catch(function(){
+  if(typeof CHARACTERS!=='undefined') buildFromData(CHARACTERS);
 });
 </script>
 </body>

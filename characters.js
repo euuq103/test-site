@@ -3,30 +3,53 @@
  *
  * ★ 새 캐릭터 추가 방법:
  *   1. 아래 CHARACTERS 객체에 새 키로 항목 추가
- *   2. 끝. index.html · characters.html 건드릴 필요 없음.
+ *   2. world 필드에 소속 세계관 키 입력 (WORLDS에 정의된 키)
+ *   3. 끝.
  *
- * ★ 새 프로필(Base) 추가 방법:
- *   1. 해당 캐릭터의 items 배열에 항목 추가
- *   2. 끝. URL item 번호는 배열 순서 기준으로 자동 연결.
+ * ★ 새 세계관 추가 방법:
+ *   1. WORLDS 객체에 새 키로 항목 추가
+ *   2. 끝.
  *
  * ─────────────────────────────────────────────────────────
- * 필드 설명:
- *   key (객체 키)  : URL ?char= 파라미터에 사용됨. 영문, 대소문자 구분.
- *   title          : 사이트에 표시되는 이름
- *   alias          : 검색 키워드 배열 (한글·영문 자유롭게)
- *   items[]
- *     label        : 프로필 버튼 텍스트 (예: 임아사, Base 2)
- *     title        : 상세 패널 제목
- *     text         : 상세 설명
- *     image        : 이미지 경로 (characters.html 기준 상대경로)
- *     thumb        : 썸네일 경로 (없으면 image 사용)
- *     alias        : 이 Base 전용 검색 키워드 (선택)
+ * WORLDS 필드:
+ *   title   : 사이트에 표시되는 세계관 이름
+ *   desc    : 세계관 설명 (선택)
+ *   color   : 세계관 강조색 (선택, 기본 cyan)
+ *
+ * CHARACTERS 필드:
+ *   world   : 소속 세계관 키 (WORLDS의 키와 일치해야 함)
+ *   title   : 캐릭터 표시 이름
+ *   alias   : 검색 키워드 배열
+ *   items[] : 프로필 목록
+ *     label : 버튼 텍스트
+ *     title : 패널 제목
+ *     text  : 설명
+ *     image : 이미지 경로 (characters.html 기준 상대경로)
+ *     thumb : 썸네일 경로 (없으면 image 사용)
+ *     alias : 이 Base 전용 검색 키워드 (선택)
  * ─────────────────────────────────────────────────────────
  */
 
+/* ── 세계관 정의 ─────────────────────────────────────────── */
+var WORLDS = {
+  IMSU: {
+    title: 'IMSU',
+    desc:  'IMSU 세계관 캐릭터들'
+  }
+  /* 새 세계관은 여기 추가:
+  ,
+  World2: {
+    title: '세계관 이름',
+    desc:  '설명'
+  }
+  */
+};
+
+/* ── 캐릭터 정의 ─────────────────────────────────────────── */
 var CHARACTERS = {
 
   Asa: {
+    world: 'IMSU',
     title: 'Asa!',
     alias: ['아사', 'asa', '임아사'],
     items: [
@@ -63,6 +86,7 @@ var CHARACTERS = {
   },
 
   Heaven: {
+    world: 'IMSU',
     title: 'Heaven',
     alias: ['헤븐', 'heaven'],
     items: [
@@ -91,6 +115,7 @@ var CHARACTERS = {
   },
 
   Sazuki: {
+    world: 'IMSU',
     title: '砂月',
     alias: ['사월', 'sazuki', '砂月', '사'],
     items: [
@@ -119,6 +144,7 @@ var CHARACTERS = {
   },
 
   Trench: {
+    world: 'IMSU',
     title: 'trench',
     alias: ['트렌치', 'trench'],
     items: [
@@ -149,6 +175,7 @@ var CHARACTERS = {
   /* ── 새 캐릭터는 여기 아래에 추가 ─────────────────────────
   ,
   NewChar: {
+    world: 'IMSU',       // ← 소속 세계관 키
     title: '새캐릭터',
     alias: ['새캐릭터', 'newchar'],
     items: [
