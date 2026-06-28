@@ -204,12 +204,18 @@ var API = 'https://test-site-f14v.onrender.com';
 /* ── 커서 ── */
 (function(){
   var dot=document.getElementById('cursor-dot'),ring=document.getElementById('cursor-ring');
-  var mx=0,my=0,rx=0,ry=0;
+  var mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
+  dot.style.left=mx+'px';dot.style.top=my+'px';
+  ring.style.left=rx+'px';ring.style.top=ry+'px';
   document.addEventListener('mousemove',function(e){
     mx=e.clientX;my=e.clientY;
     dot.style.left=mx+'px';dot.style.top=my+'px';
+  });
+  document.addEventListener('mouseover',function(e){
     if(e.target.matches('a,button,.char-nav-btn,.thumb-btn')){ring.style.width='44px';ring.style.height='44px';ring.style.borderColor='rgba(47,211,224,0.9)';}
-    else{ring.style.width='28px';ring.style.height='28px';ring.style.borderColor='rgba(47,211,224,0.55)';}
+  });
+  document.addEventListener('mouseout',function(e){
+    if(e.target.matches('a,button,.char-nav-btn,.thumb-btn')){ring.style.width='28px';ring.style.height='28px';ring.style.borderColor='rgba(47,211,224,0.55)';}
   });
   (function moveRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(moveRing);})();
 })();
