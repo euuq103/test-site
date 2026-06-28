@@ -23,18 +23,15 @@
     #particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
     body { cursor: none; }
     #cursor-dot {
-      position: fixed; width: 7px; height: 7px;
-      background: #2fd3e0; border-radius: 50%;
-      pointer-events: none; z-index: 9999;
-      transform: translate(-50%,-50%);
-      box-shadow: 0 0 8px #2fd3e0, 0 0 18px rgba(47,211,224,0.4);
+      position: fixed; width: 6px; height: 6px;
+      background: var(--accent); border-radius: 50%;
+      transform: translate(-50%,-50%); pointer-events: none; z-index: 9999;
     }
     #cursor-ring {
       position: fixed; width: 28px; height: 28px;
-      border: 1px solid rgba(47,211,224,0.55); border-radius: 50%;
-      pointer-events: none; z-index: 9998;
-      transform: translate(-50%,-50%);
-      transition: width 0.2s, height 0.2s, border-color 0.2s;
+      border: 1.5px solid rgba(47,211,224,0.55); border-radius: 50%;
+      transform: translate(-50%,-50%); pointer-events: none; z-index: 9998;
+      transition: width .15s, height .15s, border-color .15s, opacity 0.4s;
     }
     .wrap {
       position: relative; z-index: 1;
@@ -204,20 +201,36 @@ var API = 'https://test-site-f14v.onrender.com';
 /* ── 커서 ── */
 (function(){
   var dot=document.getElementById('cursor-dot'),ring=document.getElementById('cursor-ring');
-  var mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
-  dot.style.left=mx+'px';dot.style.top=my+'px';
-  ring.style.left=rx+'px';ring.style.top=ry+'px';
+  var mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my,trails=[];
+  for(var i=0;i<8;i++){
+    var t=document.createElement('div');
+    t.style.cssText='position:fixed;border-radius:50%;pointer-events:none;z-index:9996;transform:translate(-50%,-50%);';
+    document.body.appendChild(t);trails.push({el:t,x:mx,y:my});
+  }
   document.addEventListener('mousemove',function(e){
     mx=e.clientX;my=e.clientY;
     dot.style.left=mx+'px';dot.style.top=my+'px';
   });
   document.addEventListener('mouseover',function(e){
-    if(e.target.matches('a,button,.char-nav-btn,.thumb-btn')){ring.style.width='44px';ring.style.height='44px';ring.style.borderColor='rgba(47,211,224,0.9)';}
+    if(e.target.matches('a,button,.char-nav-btn,.thumb-btn,.btn')){ring.style.width='44px';ring.style.height='44px';ring.style.borderColor='rgba(47,211,224,.9)';}
   });
   document.addEventListener('mouseout',function(e){
-    if(e.target.matches('a,button,.char-nav-btn,.thumb-btn')){ring.style.width='28px';ring.style.height='28px';ring.style.borderColor='rgba(47,211,224,0.55)';}
+    if(e.target.matches('a,button,.char-nav-btn,.thumb-btn,.btn')){ring.style.width='28px';ring.style.height='28px';ring.style.borderColor='rgba(47,211,224,.55)';}
   });
-  (function moveRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(moveRing);})();
+  (function anim(){
+    rx+=(mx-rx)*.12;ry+=(my-ry)*.12;
+    ring.style.left=rx+'px';ring.style.top=ry+'px';
+    var px=mx,py=my;
+    trails.forEach(function(tr,i){
+      tr.x+=(px-tr.x)*(.25-i*.02);tr.y+=(py-tr.y)*(.25-i*.02);
+      var sz=Math.max(1,4-i*.4),al=Math.max(0,.22-i*.025);
+      tr.el.style.left=tr.x+'px';tr.el.style.top=tr.y+'px';
+      tr.el.style.width=sz+'px';tr.el.style.height=sz+'px';
+      tr.el.style.background='rgba(47,211,224,'+al+')';
+      px=tr.x;py=tr.y;
+    });
+    requestAnimationFrame(anim);
+  })();
 })();
 
 /* ── 사이드바 토글 ── */
