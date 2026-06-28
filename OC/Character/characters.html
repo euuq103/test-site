@@ -284,12 +284,10 @@ function loadCharacter(key){
   currentKey=key;
   var ch=CHAR_DB[key];
   if(!ch)return;
-  pageTitle.textContent=ch.title;
-  /* thumbList */
+  // pageTitle = world name, NOT touched here
   thumbList.querySelectorAll('.thumb-btn[data-key]').forEach(function(b){
     b.classList.toggle('active', b.dataset.key===key);
   });
-  /* */
   currentItemIdx=0;
   var items=ch.items||[];
   if(!items.length){
@@ -299,7 +297,7 @@ function loadCharacter(key){
     return;
   }
   var item=items[0];
-  detailTitle.textContent=item.title||item.label||ch.title;
+  detailTitle.textContent=ch.title; // right panel: character name only
   detailText.textContent=item.text||'';
   var src=item.image||item.thumb||'';
   if(src){mainImage.src=src;mainImage.style.display='';noImg.style.display='none';}
@@ -357,6 +355,10 @@ function activateWorld(wLabel){
   charNav.querySelectorAll('.world-nav-btn').forEach(function(b){
     b.classList.toggle('active', b.dataset.world === wLabel);
   });
+  pageTitle.textContent = wLabel; // top title = world name
+  detailTitle.textContent = '—';
+  detailText.textContent = '';
+  mainImage.style.display='none'; noImg.style.display='';
   loadWorldChars(wLabel);
 }
 
@@ -365,9 +367,12 @@ function loadWorldChars(wLabel){
   var keys = WORLD_GROUPS[wLabel] || [];
   thumbList.innerHTML = keys.map(function(key, i){
     var item = CHAR_DB[key];
-    var img  = item.items && item.items[0] && item.items[0].thumb
-               ? '<img src="'+item.items[0].thumb+'" alt="'+item.title+'">'
-               : '';
+    // thumb: from items[0].thumb OR items[0].image
+    var thumbSrc = '';
+    if(item.items && item.items[0]){
+      thumbSrc = item.items[0].thumb || item.items[0].image || '';
+    }
+    var img = thumbSrc ? '<img src="'+thumbSrc+'" alt="'+item.title+'">' : '';
     return '<button class="thumb-btn'+(i===0?' active':'')+'" data-key="'+key+'">'
            + img
            + '<span class="thumb-label">'+item.title+'</span>'
