@@ -28,18 +28,14 @@
       pointer-events: none; z-index: 9999;
       transform: translate(-50%,-50%);
       box-shadow: 0 0 8px #2fd3e0, 0 0 18px rgba(47,211,224,0.4);
-      opacity: 0; transition: opacity 0.4s;
     }
     #cursor-ring {
       position: fixed; width: 28px; height: 28px;
       border: 1px solid rgba(47,211,224,0.55); border-radius: 50%;
       pointer-events: none; z-index: 9998;
       transform: translate(-50%,-50%);
-      transition: width 0.2s, height 0.2s, border-color 0.2s, opacity 0.4s;
-      opacity: 0;
+      transition: width 0.2s, height 0.2s, border-color 0.2s;
     }
-    .cursor-visible #cursor-dot,
-    .cursor-visible #cursor-ring { opacity: 1; }
     .wrap {
       position: relative; z-index: 1;
       width: min(1100px, calc(100% - 40px));
@@ -207,20 +203,13 @@ var API = 'https://test-site-f14v.onrender.com';
 
 /* ── 커서 ── */
 (function(){
-  if('ontouchstart' in window){document.body.style.cursor='';return;}
   var dot=document.getElementById('cursor-dot'),ring=document.getElementById('cursor-ring');
-  var mx=0,my=0,rx=0,ry=0,idleT=null;
-  function showCursor(){
-    document.body.classList.add('cursor-visible');
-    clearTimeout(idleT);
-    idleT=setTimeout(function(){document.body.classList.remove('cursor-visible');},2500);
-  }
+  var mx=0,my=0,rx=0,ry=0;
   document.addEventListener('mousemove',function(e){
     mx=e.clientX;my=e.clientY;
     dot.style.left=mx+'px';dot.style.top=my+'px';
     if(e.target.matches('a,button,.char-nav-btn,.thumb-btn')){ring.style.width='44px';ring.style.height='44px';ring.style.borderColor='rgba(47,211,224,0.9)';}
     else{ring.style.width='28px';ring.style.height='28px';ring.style.borderColor='rgba(47,211,224,0.55)';}
-    showCursor();
   });
   (function moveRing(){rx+=(mx-rx)*0.12;ry+=(my-ry)*0.12;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(moveRing);})();
 })();
