@@ -538,10 +538,10 @@ function playGlitchSound(){
     });
 
     (characterWorlds||[]).forEach(function(w){
-      var wKey='world_'+(w.world_name||'Unknown');
-      (w.characters||[]).forEach(function(ch,idx){
+      (w.characters||[]).forEach(function(ch){
+        var key='char_'+ch.id;
         var keys=[(ch.name||'').toLowerCase()].concat(parseAlias(ch.alias));
-        IDX.push({tag:'OC',text:ch.name,keys:keys,url:OC_URL+'?char='+encodeURIComponent(wKey)+'&item='+idx});
+        IDX.push({tag:'OC',text:ch.name,keys:keys,url:OC_URL+'?char='+encodeURIComponent(key)+'&item=0'});
       });
     });
 
