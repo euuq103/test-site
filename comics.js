@@ -13,35 +13,17 @@
  *   images : 이미지 경로 배열 (comic/ 기준 상대경로)
  */
 
+/* 관리자 패널(DB)에서 실제 에피소드를 관리하므로, 이 배열은 API 완전 장애 시의 비상용 fallback입니다.
+ * 평소에는 비워두고, 예시/테스트용 데이터를 여기에 적어두지 마세요 (검색결과에 그대로 노출됩니다).
+ */
 var EPISODES = [
+  /* 예시:
   {
     id:     'ep1',
     title:  'Episode 1 \u2014 Intro',
     label:  'Ep.1 \u00a0Intro',
-    alias:  ['ep1', '1화', 'intro', '에피소드1', '인트로'],
+    alias:  ['ep1', '1화', 'intro'],
     images: ['img/ep1/page001.png']
-  },
-  {
-    id:     'ep2',
-    title:  'Episode 2 \u2014 Night',
-    label:  'Ep.2 \u00a0Night',
-    alias:  ['ep2', '2화', 'night', '에피소드2', '나이트'],
-    images: []
-  },
-  {
-    id:     'ep3',
-    title:  'Episode 3 \u2014 Echo',
-    label:  'Ep.3 \u00a0Echo',
-    alias:  ['ep3', '3화', 'echo', '에피소드3', '에코'],
-    images: []
-  }
-  /* 새 에피소드는 여기 아래 추가:
-  ,{
-    id:     'ep4',
-    title:  'Episode 4 \u2014 Dawn',
-    label:  'Ep.4 \u00a0Dawn',
-    alias:  ['ep4', '4화', 'dawn', '에피소드4'],
-    images: ['img/ep4/page001.png']
   }
   */
 ];
