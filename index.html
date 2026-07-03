@@ -266,6 +266,9 @@
     #boot-loader .bl-msg-ko{font-size:.82rem;color:#5ef2ff;letter-spacing:.01em;margin-top:2px;}
     #boot-loader .bl-sub{font-size:.64rem;color:#7aa9b0;margin-top:20px;letter-spacing:.02em;}
 
+      /* ══ 우클릭/드래그 저장 방지 (가벼운 억제) ══ */
+    img{ -webkit-user-drag:none; user-drag:none; -webkit-touch-callout:none; }
+
   </style>
 </head>
 <body>
@@ -318,6 +321,14 @@
   setTimeout(window.__hideBootLoader,25000);
 })();
 </script>
+<script>
+/* 가벼운 이미지 불펌 억제: 우클릭 메뉴 차단 + 이미지 드래그 차단 */
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.addEventListener('dragstart', function(e){
+  if(e.target && e.target.tagName === 'IMG') e.preventDefault();
+});
+</script>
+
 
 
 <div id="cursor-dot"></div>
@@ -504,32 +515,52 @@ function playGlitchSound(){
   var OC_URL='OC/Character/characters.html';
   var IDX=[];
 
-  function buildIndex(episodes, characters){
+  /* 쉯표로 구분된 별칭 문자열을 소문자 배열로 변환 (예: "사월,砂月" -> ['사월','砂月']) */
+  function parseAlias(str){
+    return (str||'').split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean);
+  }
+
+  function buildIndex(episodes, characterWorlds){
     IDX=[];
     IDX.push({tag:'Comic',text:'Asa!',keys:['asa','아사','만화'],url:COMIC_URL});
-    (episodes||[]).forEach(function(ep){
-      IDX.push({tag:'Comic',text:ep.title,keys:[ep.title.toLowerCase()].concat(ep.alias||[]),url:COMIC_URL});
+
+    /* world_id -> world_name 매핑 (/api/characters 응답에서 추출) */
+    var worldNameById={};
+    (characterWorlds||[]).forEach(function(w){
+      if(w.world_id!=null) worldNameById[w.world_id]=w.world_name;
     });
-    Object.keys(characters||{}).forEach(function(key){
-      var ch=characters[key];
-      IDX.push({tag:'OC',text:ch.title,keys:[ch.title.toLowerCase(),key.toLowerCase()].concat(ch.alias||[]),url:OC_URL+'?char='+key+'&item=0'});
-      (ch.items||[]).forEach(function(item,i){
-        IDX.push({tag:'OC',text:ch.title+' \u2014 '+item.label,keys:[item.label.toLowerCase()].concat(item.alias||[]),url:OC_URL+'?char='+key+'&item='+i});
+
+    (episodes||[]).forEach(function(ep){
+      var wName = worldNameById[ep.world_id];
+      var url = wName ? (COMIC_URL+'?world='+encodeURIComponent(wName)) : COMIC_URL;
+      var keys=[ep.title.toLowerCase()].concat(parseAlias(ep.alias));
+      IDX.push({tag:'Comic',text:ep.title,keys:keys,url:url});
+    });
+
+    (characterWorlds||[]).forEach(function(w){
+      var wKey='world_'+(w.world_name||'Unknown');
+      (w.characters||[]).forEach(function(ch,idx){
+        var keys=[(ch.name||'').toLowerCase()].concat(parseAlias(ch.alias));
+        IDX.push({tag:'OC',text:ch.name,keys:keys,url:OC_URL+'?char='+encodeURIComponent(wKey)+'&item='+idx});
       });
     });
+
     var seen={};
     IDX=IDX.filter(function(e){if(seen[e.url])return false;seen[e.url]=1;return true;});
   }
 
-  /* 로컬 fallback 즉시 빌드 */
+  /* 로컬 fallback 즉시 빌드 (콜드스타트 대비, 캐릭터는 API 응답 전까지 빈 상태) */
   var localEpisodes = (typeof EPISODES!=='undefined') ? EPISODES : [];
-  var localChars = (typeof CHARACTERS!=='undefined') ? CHARACTERS : {};
-  buildIndex(localEpisodes, localChars);
+  buildIndex(localEpisodes, []);
 
-  /* API에서 최신 에피소드 보강 */
-  fetch(API+'/api/episodes').then(function(r){return r.json();}).then(function(eps){
-    if(eps&&eps.length) buildIndex(eps, localChars);
-  }).catch(function(){});
+  /* API에서 에피소드+캐릭터 둘 다 받아와 완전히 교체 (is_public 필터링 적용된 상태로) */
+  Promise.all([
+    fetch(API+'/api/episodes').then(function(r){return r.json();}).catch(function(){return null;}),
+    fetch(API+'/api/characters').then(function(r){return r.json();}).catch(function(){return null;})
+  ]).then(function(res){
+    var eps=res[0], chars=res[1];
+    if(eps || chars) buildIndex(eps||localEpisodes, chars||[]);
+  });
 
   function doMatch(e,q){
     var ql=q.toLowerCase();

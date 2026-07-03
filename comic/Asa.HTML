@@ -472,8 +472,12 @@ if(localEps.length){
       if(window.__hideBootLoader) window.__hideBootLoader();
     });
   }).catch(function(){
-    if(!localEps.length && typeof EPISODES!=='undefined'){
+    if(!localEps.length && typeof EPISODES!=='undefined' && EPISODES.length){
       renderEpisodeList(EPISODES); showEpisode(0);
+    } else if(!localEps.length){
+      /* API 완전 장애 + 로컬 fallback도 비어있는 경우 안전하게 안내 문구만 표시 */
+      listEl.innerHTML='<div class="viewer-placeholder" style="padding:20px">목록을 불러오지 못했습니다.</div>';
+      webtoonStripEl.innerHTML='<div class="viewer-placeholder">서버 연결에 실패했습니다. 잠시 후 새로고침 해주세요.</div>';
     }
     if(window.__hideBootLoader) window.__hideBootLoader();
   });
