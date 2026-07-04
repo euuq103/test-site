@@ -327,7 +327,14 @@
       setTimeout(function(){ if(loader.parentNode) loader.parentNode.removeChild(loader); },650);
     },wait);
   };
-  setTimeout(window.__hideBootLoader,25000);
+  /* 핵심 API 호출(세계관 x2, 뉴스, 검색 인덱스)이 전부 끝나야(성공/실패 무관) 로더 해제 */
+  window.__bootPending = 4;
+  window.__bootFetchDone = function(){
+    window.__bootPending = Math.max(0, window.__bootPending - 1);
+    if(window.__bootPending === 0) window.__hideBootLoader();
+  };
+  /* 서버가 응답이 없어도 무한 대기하지 않도록 하는 최종 안전장치 */
+  setTimeout(window.__hideBootLoader,45000);
 })();
 </script>
 <script>
@@ -569,6 +576,8 @@ function playGlitchSound(){
   ]).then(function(res){
     var eps=res[0], chars=res[1];
     if(eps || chars) buildIndex(eps||localEpisodes, chars||[]);
+  }).finally(function(){
+    if(window.__bootFetchDone) window.__bootFetchDone();
   });
 
   function doMatch(e,q){
@@ -640,6 +649,8 @@ function playGlitchSound(){
     }));
   }).catch(function(){
     renderDropdown(buildWorldList());
+  }).finally(function(){
+    if(window.__bootFetchDone) window.__bootFetchDone();
   });
 
   var timer=null;
@@ -681,6 +692,8 @@ function playGlitchSound(){
     }));
   }).catch(function(){
     renderComicDropdown(buildComicWorldList());
+  }).finally(function(){
+    if(window.__bootFetchDone) window.__bootFetchDone();
   });
 
   /* 로컬 fallback: WORLDS 사용 */
@@ -803,16 +816,11 @@ document.addEventListener('click',function(e){
   /* API 우선, 실패시 fallback */
   fetch(API+'/api/news').then(function(r){return r.json();})
     .then(function(d){if(d&&d.length)renderNews(d);else renderNews(FALLBACK);})
-    .catch(function(){renderNews(FALLBACK);});
+    .catch(function(){renderNews(FALLBACK);})
+    .finally(function(){
+      if(window.__bootFetchDone) window.__bootFetchDone();
+    });
 })();
-
-/* index.html은 로컬 데이터로 이미 즉시 렌더되므로, 리소스 로드 완료 시 바로 로더 해제 */
-window.addEventListener('load', function(){
-  if(window.__hideBootLoader) window.__hideBootLoader();
-});
-setTimeout(function(){
-  if(window.__hideBootLoader) window.__hideBootLoader();
-}, 1200);
 </script>
 </body>
 </html>
