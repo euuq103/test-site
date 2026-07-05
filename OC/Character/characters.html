@@ -355,6 +355,12 @@ document.addEventListener('dragstart', function(e){
   </div>
 </div>
 
+<!-- 라이트박스 오버레이 -->
+<div id="lightbox" onclick="closeLightbox()">
+  <span class="lb-close">✕</span>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
 <script>
 var API = 'https://test-site-f14v.onrender.com';
 var urlParams = new URLSearchParams(location.search);
@@ -617,10 +623,5 @@ fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(a
 });
 </script>
 
-<!-- 라이트박스 오버레이 -->
-<div id="lightbox" onclick="closeLightbox()">
-  <span class="lb-close">✕</span>
-  <img id="lightboxImg" src="" alt="">
-</div>
 </body>
 </html>
