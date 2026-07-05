@@ -221,6 +221,38 @@
       /* ══ 우클릭/드래그 저장 방지 (가벼운 억제) ══ */
     img{ -webkit-user-drag:none; user-drag:none; -webkit-touch-callout:none; }
 
+
+    /* 라이트박스 (이미지 확대 보기) */
+    #lightbox {
+      position:fixed; inset:0; background:rgba(0,0,0,.92);
+      display:none; align-items:center; justify-content:center; z-index:99999;
+      cursor:pointer; -webkit-user-select:none; user-select:none;
+    }
+    #lightbox.show { display:flex; }
+    #lightbox img {
+      max-width:90vw; max-height:90vh; object-fit:contain;
+      border:1px solid rgba(47,211,224,.15);
+      -webkit-user-drag:none; pointer-events:none;
+    }
+    #lightbox .lb-close {
+      position:fixed; top:20px; right:28px; color:#2fd3e0; font-size:1.4rem;
+      font-family:'Courier New',monospace; opacity:.6; transition:opacity .15s;
+    }
+    #lightbox .lb-close:hover { opacity:1; }
+    /* 핀터레스트식 확대 버튼 */
+    .viewer-frame { position:relative; }
+    .zoom-btn {
+      position:absolute; bottom:10px; right:10px;
+      width:30px; height:30px; border-radius:4px;
+      background:rgba(2,2,2,.7); border:1px solid rgba(47,211,224,.3);
+      color:#2fd3e0; font-size:1.1rem; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      opacity:0; transition:opacity .2s, border-color .2s;
+      z-index:5; -webkit-user-select:none; user-select:none;
+    }
+    .viewer-frame:hover .zoom-btn { opacity:1; }
+    .zoom-btn:hover { border-color:#2fd3e0; background:rgba(47,211,224,.1); }
+    @media (hover:none) { .zoom-btn { opacity:1; } }
   </style>
   <script src="../../characters.js"></script>
 </head>
@@ -313,6 +345,7 @@ document.addEventListener('dragstart', function(e){
       <div class="viewer-frame">
         <img id="mainImage" alt="" style="display:none;" />
         <span class="no-img" id="noImg">No image</span>
+        <button class="zoom-btn" id="zoomBtn" onclick="event.stopPropagation(); openLightbox()">&#x2922;</button>
       </div>
       <div class="info-pane">
         <h2 id="detailTitle">—</h2>
@@ -370,6 +403,26 @@ toggleBtn.addEventListener('click',function(){
 var charNav=document.getElementById('charNav');
 var thumbList=document.getElementById('thumbList');
 var mainImage=document.getElementById('mainImage');
+var lightbox=document.getElementById('lightbox');
+var lightboxImg=document.getElementById('lightboxImg');
+var zoomBtn=document.getElementById('zoomBtn');
+
+function openLightbox(){
+  if(mainImage.src && mainImage.style.display!=='none'){
+    lightboxImg.src=mainImage.src;
+    lightbox.classList.add('show');
+  }
+}
+function closeLightbox(){ lightbox.classList.remove('show'); lightboxImg.src=''; }
+
+// ESC 닫기
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeLightbox(); });
+
+// 이미지 바뀔 때 버튼 표시/숨김
+var observer=new MutationObserver(function(){
+  zoomBtn.style.display = (mainImage.style.display!=='none') ? 'flex' : 'none';
+});
+observer.observe(mainImage,{attributes:true,attributeFilter:['style']});
 var noImg=document.getElementById('noImg');
 var detailTitle=document.getElementById('detailTitle');
 var detailText=document.getElementById('detailText');
@@ -563,5 +616,11 @@ fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(a
   if(window.__hideBootLoader) window.__hideBootLoader();
 });
 </script>
+
+<!-- 라이트박스 오버레이 -->
+<div id="lightbox" onclick="closeLightbox()">
+  <span class="lb-close">✕</span>
+  <img id="lightboxImg" src="" alt="">
+</div>
 </body>
 </html>
