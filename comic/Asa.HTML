@@ -57,7 +57,7 @@
       position: fixed; top: 24px; left: 24px;
       display: flex; gap: 0; z-index: 200;
     }
-    .arrow-btn, #sidebarToggle {
+    .arrow-btn, #sidebarToggle, .lang-btn {
       border: 1px solid var(--line);
       background: rgba(5,5,5,0.92);
       color: var(--text); padding: 8px 14px;
@@ -70,6 +70,27 @@
       color: var(--muted);
       font-size: 0.82rem;
       letter-spacing: 0.08em;
+    }
+    .lang-btn {
+      color: var(--muted);
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      font-family: inherit;
+    }
+    .lang-btn:hover {
+      border-color: var(--accent);
+      background: rgba(47,211,224,0.10);
+      box-shadow: 0 0 8px rgba(47,211,224,0.2);
+      color: #fff; z-index: 1; position: relative;
+    }
+    .lang-btn.active {
+      border-color: var(--accent);
+      background: rgba(47,211,224,0.12);
+      color: #fff;
+    }
+    .lang-divider {
+      width: 1px; background: var(--line); align-self: stretch;
+      margin: 0 0; flex-shrink: 0;
     }
     .arrow-btn:hover, #sidebarToggle:hover {
       border-color: var(--accent);
@@ -293,7 +314,9 @@ document.addEventListener('dragstart', function(e){
 <div class="arrow-fixed">
   <button class="arrow-btn" id="prevBtn">&#9664;</button>
   <button class="arrow-btn" id="nextBtn">&#9654;</button>
-  <button id="sidebarToggle" title="사이드바 열기/닫기">&#9776; EP</button>
+  <button id="sidebarToggle" title="Toggle sidebar">&#9776; EP</button>
+  <div class="lang-divider" id="langDivider" style="display:none"></div>
+  <div id="langToggleWrap" style="display:flex;gap:0"></div>
 </div>
 
 <div class="container">
@@ -339,7 +362,7 @@ var WORLD_PARAM = urlParams.get('world') || '';
   document.addEventListener('mousemove',function(e){
     mx=e.clientX; my=e.clientY;
     dot.style.left=mx+'px'; dot.style.top=my+'px';
-    if(e.target.matches('a,button,.chapter-btn,.arrow-btn')){
+    if(e.target.matches('a,button,.chapter-btn,.arrow-btn,.lang-btn')){
       ring.style.width='44px'; ring.style.height='44px';
       ring.style.borderColor='rgba(47,211,224,0.9)';
     } else {
@@ -380,8 +403,61 @@ toggleBtn.addEventListener('click',function(){
 var listEl=document.getElementById('episodeList');
 var viewerTitleEl=document.getElementById('viewerTitle');
 var webtoonStripEl=document.getElementById('webtoonStrip');
+var langToggleWrap=document.getElementById('langToggleWrap');
+var langDivider=document.getElementById('langDivider');
 var episodeData=[];
 var currentIndex=0;
+var CURRENT_LANG='ko';
+
+var LANG_CODES={ko:'KR',en:'EN',ja:'JP',ru:'RU'};
+
+/* 에피소드의 pages에서 사용 가능한 언어 감지 */
+function detectLangs(pages){
+  var langs={ko:false,en:false,ja:false,ru:false};
+  if(!pages||!pages.length) return langs;
+  pages.forEach(function(p){
+    if(p.image_url)    langs.ko=true;
+    if(p.image_url_en) langs.en=true;
+    if(p.image_url_ja) langs.ja=true;
+    if(p.image_url_ru) langs.ru=true;
+  });
+  return langs;
+}
+
+/* 언어 토글 버튼 구성 — 번역이 있는 언어만 표시 */
+function buildLangToggle(pages){
+  var avail=detectLangs(pages);
+  var hasMulti=false;
+  langToggleWrap.innerHTML='';
+  ['ko','en','ja','ru'].forEach(function(code){
+    if(!avail[code]) return;
+    hasMulti=true;
+    var btn=document.createElement('button');
+    btn.className='lang-btn'+(code===CURRENT_LANG?' active':'');
+    btn.textContent=LANG_CODES[code];
+    btn.dataset.lang=code;
+    btn.addEventListener('click',function(){ switchLang(code); });
+    langToggleWrap.appendChild(btn);
+  });
+  langDivider.style.display=hasMulti?'block':'none';
+}
+
+/* 언어 전환 — 현재 에피소드 재렌더 */
+function switchLang(lang){
+  CURRENT_LANG=lang;
+  langToggleWrap.querySelectorAll('.lang-btn').forEach(function(b){
+    b.classList.toggle('active', b.dataset.lang===lang);
+  });
+  showEpisode(currentIndex);
+}
+
+/* 페이지에서 현재 언어에 맞는 URL 반환 (빈값이면 한국어 폴백) */
+function getPageUrl(p){
+  if(!p) return '';
+  if(CURRENT_LANG==='ko') return p.image_url||'';
+  var langUrl=p['image_url_'+CURRENT_LANG]||'';
+  return langUrl||p.image_url||'';
+}
 
 function renderEpisodeList(episodes){
   episodeData=episodes;
@@ -402,15 +478,26 @@ function showEpisode(index){
   var ep=episodeData[currentIndex];
   viewerTitleEl.textContent=ep.title;
 
-  /* images 배열: API는 pages 배열로, 로컬은 images 배열로 */
-  var imgs=ep.pages||ep.images||[];
-  if(imgs.length>0){
-    webtoonStripEl.innerHTML=imgs.map(function(src){
-      /* API에서 오는 경우 src는 Cloudinary URL, 로컬은 상대경로 */
-      return '<img src="'+src+'" alt="" loading="lazy"/>';
-    }).join('');
+  /* 언어 토글 갱신 */
+  buildLangToggle(ep.allPages||[]);
+
+  /* 이미지 렌더 — 현재 언어 기준 */
+  var pages=ep.allPages||ep.pages||ep.images||[];
+  if(pages.length>0){
+    if(typeof pages[0]==='string'){
+      /* 로컬 fallback: 문자열 배열 */
+      webtoonStripEl.innerHTML=pages.map(function(src){
+        return '<img src="'+src+'" alt="" loading="lazy"/>';
+      }).join('');
+    } else {
+      /* API: 페이지 객체 배열 — 언어별 URL 선택 */
+      webtoonStripEl.innerHTML=pages.map(function(p){
+        var url=getPageUrl(p);
+        return '<img src="'+url+'" alt="" loading="lazy"/>';
+      }).join('');
+    }
   } else {
-    webtoonStripEl.innerHTML='<div class="viewer-placeholder">준비중입니다.</div>';
+    webtoonStripEl.innerHTML='<div class="viewer-placeholder">PREPARING...</div>';
   }
   window.scrollTo({top:0,behavior:'smooth'});
   if(window.innerWidth<=640) layout.classList.remove('mobile-open');
@@ -458,13 +545,15 @@ if(localEps.length){
           })
         : eps;
       /* 매칭 없으면 빈 상태 유지 (다른 세계관 에피소드 섞이지 않게) */
-      if(!filtered.length){ viewerTitleEl.textContent='에피소드 없음'; if(window.__hideBootLoader) window.__hideBootLoader(); return; }
+      if(!filtered.length){ viewerTitleEl.textContent='NO EPISODES'; if(window.__hideBootLoader) window.__hideBootLoader(); return; }
       var converted = filtered.map(function(ep){
+        var pages=(ep.pages||[]);
         return {
           id:    ep.id,
           title: ep.title,
           label: ep.title,
-          pages: (ep.pages||[]).map(function(p){ return p.image_url||p; })
+          allPages: pages,
+          pages: pages.map(function(p){ return getPageUrl(p); })
         };
       });
       renderEpisodeList(converted);
@@ -473,8 +562,10 @@ if(localEps.length){
     }).catch(function(){
       /* worlds 실패 — 필터 없이 전체 */
       var converted = eps.map(function(ep){
+        var pages=(ep.pages||[]);
         return { id:ep.id, title:ep.title, label:ep.title,
-                 pages:(ep.pages||[]).map(function(p){return p.image_url||p;}) };
+                 allPages:pages,
+                 pages:pages.map(function(p){return getPageUrl(p);}) };
       });
       renderEpisodeList(converted);
       showEpisode(0);
@@ -484,9 +575,8 @@ if(localEps.length){
     if(!localEps.length && typeof EPISODES!=='undefined' && EPISODES.length){
       renderEpisodeList(EPISODES); showEpisode(0);
     } else if(!localEps.length){
-      /* API 완전 장애 + 로컬 fallback도 비어있는 경우 안전하게 안내 문구만 표시 */
-      listEl.innerHTML='<div class="viewer-placeholder" style="padding:20px">목록을 불러오지 못했습니다.</div>';
-      webtoonStripEl.innerHTML='<div class="viewer-placeholder">서버 연결에 실패했습니다. 잠시 후 새로고침 해주세요.</div>';
+      listEl.innerHTML='<div class="viewer-placeholder" style="padding:20px">LOAD FAILED</div>';
+      webtoonStripEl.innerHTML='<div class="viewer-placeholder">SERVER CONNECTION FAILED. PLEASE REFRESH.</div>';
     }
     if(window.__hideBootLoader) window.__hideBootLoader();
   });
