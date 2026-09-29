@@ -560,11 +560,23 @@ if(localEps.length){
     if(window.__hideBootLoader) window.__hideBootLoader();
   }
 
+  function renderUnfiltered(eps){
+    var converted = eps.map(function(ep){
+      var pages=(ep.pages||[]);
+      return { id:ep.id, title:ep.title, label:ep.title,
+        allPages:pages,
+        pages:pages.map(function(p){return getPageUrl(p);}) };
+    });
+    renderEpisodeList(converted);
+    showEpisode(0);
+    if(window.__hideBootLoader) window.__hideBootLoader();
+  }
+
   /* 1) 캐시 먼저 확인 — 최근 데이터면 즉시 렌더링 (API 안 기다림) */
   var cache=null;
   try{ cache=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); }catch(e){}
   if(cache && cache.eps && cache.eps.length && (Date.now()-cache.t)<CACHE_TTL){
-    renderFiltered(cache.eps, cache.worlds);
+    if(cache.worlds===null){ renderUnfiltered(cache.eps); } else { renderFiltered(cache.eps, cache.worlds); }
     return;
   }
 
@@ -575,20 +587,8 @@ if(localEps.length){
   Promise.all([epsReq, worldsReq]).then(function(res){
     var eps=res[0], worlds=res[1];
     if(!eps||!eps.length) return;
-    try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), eps:eps, worlds:worlds||[]})); }catch(e){}
-    if(worlds===null){
-      /* worlds 실패 — 필터 없이 전체 */
-      var converted = eps.map(function(ep){
-        var pages=(ep.pages||[]);
-        return { id:ep.id, title:ep.title, label:ep.title,
-          allPages:pages,
-          pages:pages.map(function(p){return getPageUrl(p);}) };
-      });
-      renderEpisodeList(converted);
-      showEpisode(0);
-    } else {
-      renderFiltered(eps, worlds);
-    }
+    try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), eps:eps, worlds:worlds})); }catch(e){}
+    if(worlds===null){ renderUnfiltered(eps); } else { renderFiltered(eps, worlds); }
     if(window.__hideBootLoader) window.__hideBootLoader();
   }).catch(function(){
     if(!localEps.length && typeof EPISODES!=='undefined' && EPISODES.length){
