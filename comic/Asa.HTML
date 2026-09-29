@@ -529,49 +529,67 @@ if(localEps.length){
   viewerTitleEl.textContent='Loading...';
 }
 
-/* API에서 전체 에피소드 가져온 뒤 프론트에서 세계관 필터 */
+/* API에서 전체 에피소드 가져온 뒤 프론트에서 세계관 필터
+   개선: worlds/episodes 병렬 요청 + localStorage 캐시(10분) */
 (function(){
-  fetch(API+'/api/episodes').then(function(r){return r.json();}).then(function(eps){
+  var CACHE_KEY='lawren_api_cache_v1';
+  var CACHE_TTL=10*60*1000; /* 10분 */
+
+  function renderFiltered(eps, worlds){
+    var worldMap={};
+    (worlds||[]).forEach(function(w){ worldMap[w.id]=w.name; });
+    var filtered = WORLD_PARAM
+      ? eps.filter(function(ep){
+          var wname = (worldMap[ep.world_id]||'').toLowerCase();
+          return wname === WORLD_PARAM.toLowerCase();
+        })
+      : eps;
+    if(!filtered.length){ viewerTitleEl.textContent='NO EPISODES'; if(window.__hideBootLoader) window.__hideBootLoader(); return; }
+    var converted = filtered.map(function(ep){
+      var pages=(ep.pages||[]);
+      return {
+        id:    ep.id,
+        title: ep.title,
+        label: ep.title,
+        allPages: pages,
+        pages: pages.map(function(p){ return getPageUrl(p); })
+      };
+    });
+    renderEpisodeList(converted);
+    showEpisode(0);
+    if(window.__hideBootLoader) window.__hideBootLoader();
+  }
+
+  /* 1) 캐시 먼저 확인 — 최근 데이터면 즉시 렌더링 (API 안 기다림) */
+  var cache=null;
+  try{ cache=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); }catch(e){}
+  if(cache && cache.eps && cache.eps.length && (Date.now()-cache.t)<CACHE_TTL){
+    renderFiltered(cache.eps, cache.worlds);
+    return;
+  }
+
+  /* 2) 캐시 없으면 episodes+worlds 동시에 요청 (기존엔 순차라 2배 느렸음) */
+  var epsReq = fetch(API+'/api/episodes').then(function(r){return r.json();});
+  var worldsReq = fetch(API+'/api/worlds').then(function(r2){return r2.json();}).catch(function(){return null;});
+
+  Promise.all([epsReq, worldsReq]).then(function(res){
+    var eps=res[0], worlds=res[1];
     if(!eps||!eps.length) return;
-    /* world_name 매핑을 위해 worlds도 가져옴 */
-    fetch(API+'/api/worlds').then(function(r2){return r2.json();}).then(function(worlds){
-      /* world_id -> name 맵 */
-      var worldMap={};
-      (worlds||[]).forEach(function(w){ worldMap[w.id]=w.name; });
-      /* 세계관 필터 */
-      var filtered = WORLD_PARAM
-        ? eps.filter(function(ep){
-            var wname = (worldMap[ep.world_id]||'').toLowerCase();
-            return wname === WORLD_PARAM.toLowerCase();
-          })
-        : eps;
-      /* 매칭 없으면 빈 상태 유지 (다른 세계관 에피소드 섞이지 않게) */
-      if(!filtered.length){ viewerTitleEl.textContent='NO EPISODES'; if(window.__hideBootLoader) window.__hideBootLoader(); return; }
-      var converted = filtered.map(function(ep){
-        var pages=(ep.pages||[]);
-        return {
-          id:    ep.id,
-          title: ep.title,
-          label: ep.title,
-          allPages: pages,
-          pages: pages.map(function(p){ return getPageUrl(p); })
-        };
-      });
-      renderEpisodeList(converted);
-      showEpisode(0);
-      if(window.__hideBootLoader) window.__hideBootLoader();
-    }).catch(function(){
+    try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), eps:eps, worlds:worlds||[]})); }catch(e){}
+    if(worlds===null){
       /* worlds 실패 — 필터 없이 전체 */
       var converted = eps.map(function(ep){
         var pages=(ep.pages||[]);
         return { id:ep.id, title:ep.title, label:ep.title,
-                 allPages:pages,
-                 pages:pages.map(function(p){return getPageUrl(p);}) };
+          allPages:pages,
+          pages:pages.map(function(p){return getPageUrl(p);}) };
       });
       renderEpisodeList(converted);
       showEpisode(0);
-      if(window.__hideBootLoader) window.__hideBootLoader();
-    });
+    } else {
+      renderFiltered(eps, worlds);
+    }
+    if(window.__hideBootLoader) window.__hideBootLoader();
   }).catch(function(){
     if(!localEps.length && typeof EPISODES!=='undefined' && EPISODES.length){
       renderEpisodeList(EPISODES); showEpisode(0);
