@@ -308,6 +308,113 @@
   </style>
 </head>
 <body>
+<!-- ============================================================
+  LAWREN103 첫 방문 인트로 (최종: TV 전원 켜기) — 붙여넣기 스니펫
+  위치: index.html의 <body> 바로 아래 (다른 내용보다 가장 먼저)
+  동작: 첫 방문에만 재생 — 브라운관 켜지듯 가로 한 줄이 퍼지며
+        LAWREN103 로고(흰색)가 뜨고, TOUCH TO ENTER 대기.
+        탭/클릭하면 TV 꺼지듯 가로선으로 수축하며 기존 로딩 화면으로.
+  가드: sessionStorage('lawIntroPlayed') 세션 내 첫 방문만,
+        prefers-reduced-motion 사용자는 자동 스킵.
+  충돌 없음: 전부 lawIntro 접두어, 종료 시 DOM 자체 삭제.
+============================================================ -->
+
+<style>
+#lawIntroOv { position:fixed; inset:0; z-index:100000; background:#02070a; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  cursor:pointer; }
+#lawStg { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+#lawStg.lawTvOn  { animation:lawTvOn .9s cubic-bezier(.2,.8,.3,1) forwards; }
+#lawStg.lawTvOff { animation:lawTvOff .5s ease-in forwards; }
+@keyframes lawTvOn {
+  0%   { transform:scaleY(.003) scaleX(1.4); filter:brightness(6); }
+  45%  { transform:scaleY(1) scaleX(1);      filter:brightness(2.4); }
+  100% { transform:scale(1);                  filter:brightness(1); }
+}
+@keyframes lawTvOff {
+  0%   { transform:scale(1);      filter:brightness(1); }
+  25%  { filter:brightness(2.8); }
+  100% { transform:scaleY(.004) scaleX(1.25); filter:brightness(4); }
+}
+#lawIntroOv.lawHide { opacity:0; pointer-events:none; }
+#lawIntroOv { transition:opacity .8s ease; }
+
+#lawLogo { position:relative; z-index:2; font-family:Arial, sans-serif;
+  font-size:clamp(2rem,9vw,4rem); font-weight:900; letter-spacing:.22em; text-indent:.22em;
+  color:#ffffff; animation:lawLogoFlick 2.4s steps(1) infinite; }
+@keyframes lawLogoFlick {
+  0%,100%{opacity:1;} 7%{opacity:.94;} 8%{opacity:1;}
+  34%{opacity:.97;} 35%{opacity:1;} 70%{opacity:.93;} 72%{opacity:1;}
+}
+.lawScan { position:absolute; inset:0; pointer-events:none; z-index:3;
+  background:repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 3px);
+  animation:lawCrtFlick 4s steps(1) infinite; }
+@keyframes lawCrtFlick {
+  0%,100%{opacity:.8;} 31%{opacity:.8;} 32%{opacity:.6;} 33%{opacity:.8;}
+  78%{opacity:.8;} 79%{opacity:.68;} 80%{opacity:.8;}
+}
+.lawVignette { position:absolute; inset:0; pointer-events:none; z-index:4;
+  background:radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%); }
+
+#lawTouch { margin-top:46px; display:flex; flex-direction:column; align-items:center;
+  opacity:0; transition:opacity .9s ease; position:relative; z-index:2; }
+#lawTouch.lawShow { opacity:1; }
+.lawTapRing { position:relative; width:52px; height:52px; margin-bottom:16px; }
+.lawTapRing .lawDot { position:absolute; left:50%; top:50%; width:8px; height:8px; margin:-4px 0 0 -4px;
+  border-radius:50%; background:#ffffff; }
+.lawTapRing .lawRing { position:absolute; inset:0; border-radius:50%;
+  border:1px solid rgba(255,255,255,.55); animation:lawRingPulse 1.8s ease-out infinite; }
+@keyframes lawRingPulse { 0%{transform:scale(.35);opacity:.9;} 100%{transform:scale(1);opacity:0;} }
+#lawTouch .lawLabel { font-size:.72rem; letter-spacing:.42em; text-indent:.42em;
+  color:#ffffff; opacity:.75; animation:lawLabelBreathe 1.8s ease-in-out infinite; }
+@keyframes lawLabelBreathe { 0%,100%{opacity:.75;} 50%{opacity:.35;} }
+</style>
+
+<div id="lawIntroOv"><div id="lawStg">
+  <div id="lawLogo">LAWREN103</div>
+  <div class="lawScan"></div>
+  <div class="lawVignette"></div>
+  <div id="lawTouch">
+    <div class="lawTapRing"><span class="lawRing"></span><span class="lawDot"></span></div>
+    <div class="lawLabel">TOUCH TO ENTER</div>
+  </div>
+</div></div>
+
+<script>
+(function(){
+  var ov = document.getElementById('lawIntroOv');
+  var stg = document.getElementById('lawStg');
+  var touch = document.getElementById('lawTouch');
+  if(!ov) return;
+
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var played = false;
+  try{ played = !!sessionStorage.getItem('lawIntroPlayed'); }catch(e){}
+  if(reduced || played){ ov.remove(); return; }
+
+  /* TV 전원 켜짐 → 1.4s 후 터치 유도 등장 */
+  stg.classList.add('lawTvOn');
+  var uiT = setTimeout(function(){ touch.classList.add('lawShow'); }, 1400);
+
+  var done = false;
+  function enter(){
+    if(done) return; done = true;
+    clearTimeout(uiT);
+    try{ sessionStorage.setItem('lawIntroPlayed','1'); }catch(e){}
+    stg.classList.remove('lawTvOn');
+    stg.classList.add('lawTvOff');
+    setTimeout(function(){
+      ov.classList.add('lawHide');
+      setTimeout(function(){ if(ov.parentNode) ov.remove(); }, 900);
+    }, 480);
+  }
+  ov.addEventListener('click', enter);
+})();
+</script>
+
+<!-- ============================ END ============================ -->
+
+
 <div id="boot-loader">
   <div class="bl-particles" id="blParticles"></div>
   <div class="bl-content">
