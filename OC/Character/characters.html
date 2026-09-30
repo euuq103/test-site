@@ -373,7 +373,9 @@ var WORLD_PARAM = urlParams.get('world') || '';
   function r(){W=c.width=window.innerWidth;H=c.height=window.innerHeight;}r();
   window.addEventListener('resize',r);
   for(var i=0;i<90;i++)dots.push({x:Math.random()*1920,y:Math.random()*1080,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,r:Math.random()*1.4+.3,a:Math.random()*.55+.1});
-  function draw(){ctx.clearRect(0,0,W,H);dots.forEach(function(d){d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(94,242,255,'+d.a+')';ctx.fill();});requestAnimationFrame(draw);}
+  var P_RGB='94,242,255'; /* 세계관별 파티클 색 (기본: 시안) */
+  window.setParticleRGB=function(v){P_RGB=v;};
+  function draw(){ctx.clearRect(0,0,W,H);dots.forEach(function(d){d.x+=d.vx;d.y+=d.vy;if(d.x<0)d.x=W;if(d.x>W)d.x=0;if(d.y<0)d.y=H;if(d.y>H)d.y=0;ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba('+P_RGB+','+d.a+')';ctx.fill();});requestAnimationFrame(draw);}
   draw();
 })();
 
@@ -535,6 +537,9 @@ function activateWorld(wLabel){
   charNav.querySelectorAll('.world-nav-btn').forEach(function(b){
     b.classList.toggle('active', b.dataset.world === wLabel);
   });
+  /* 세계관별 파티클 색 전환 (알 수 없는 세계관은 시안 유지) */
+  var WORLD_RGB={'trench':'94,242,255','heaven':'212,175,55','砂月':'184,169,201','asa!':'255,122,110'};
+  if(window.setParticleRGB) setParticleRGB(WORLD_RGB[String(wLabel||'').toLowerCase()]||'94,242,255');
   pageTitle.textContent = wLabel; // top title = world name
   detailTitle.textContent = '—';
   detailText.textContent = '';
