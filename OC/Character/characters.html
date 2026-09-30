@@ -122,14 +122,14 @@
     }
     .char-nav-btn.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(47,211,224,.18) inset; color: #fff; }
     .char-nav-btn:hover { border-color: var(--accent); color: #fff; box-shadow: 0 0 10px rgba(47,211,224,.22); transform: translateY(-1px); }
-    .thumb-list { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+    .thumb-list { display: grid; grid-template-columns: repeat(2,1fr); gap: 6px; }
     .thumb-btn {
       display: flex; flex-direction: column; align-items: center; gap: 4px;
       border: 1px solid var(--line); padding: 4px; background: #0b0b0b;
-      color: var(--text); cursor: pointer; width: 60px;
+      color: var(--text); cursor: pointer; width: 100%; min-width: 0;
       transition: border-color .2s, box-shadow .2s, transform .2s;
     }
-    .thumb-btn img { width:52px; height:52px; object-fit:cover; display:block; }
+    .thumb-btn img { width:100%; aspect-ratio:1; object-fit:cover; display:block; }
     .thumb-btn.active { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(47,211,224,.18) inset; }
     .thumb-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
     .thumb-image { width: 100%; aspect-ratio: 1; background: rgba(94,242,255,.08) center/cover no-repeat; border: 1px solid rgba(94,242,255,.1); }
@@ -515,7 +515,9 @@ function buildFromData(db){
     var wOf = db[charParam].world || WORLD_ORDER[0];
     activateWorld(wOf);
     loadCharacter(charParam);
-    setTimeout(function(){ selectItem(isNaN(itemParam)?0:itemParam); }, 0);
+    /* 참고: item 파라미터는 항상 0으로 전달되며 loadCharacter가 이미 첫 항목을
+       표시하므로 별도 selectItem 호출은 불필요 — 캐릭터 목록(썸네일)의
+       active 표시를 인덱스로 재계산해 엉뚱한 캐릭터를 켜던 버그였음. 제거함. */
   } else {
     /* URL ?world= param: case-insensitive match */
     var targetWorld = null;
