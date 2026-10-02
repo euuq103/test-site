@@ -845,18 +845,16 @@ function playGlitchSound(){
 
   function renderComicDropdown(items){
     var withCover=items.filter(function(it){return it.cover;});
-    var noCover =items.filter(function(it){return !it.cover;});
-    var cards=withCover.map(function(item){
-      return '<a class="cc-item" href="'+item.url+'">'
-        +'<span class="cc-cover"><img src="'+item.cover+'" alt="'+item.label+' 표지" loading="lazy" onerror="this.style.display=\'none\'">'
-        +'<span class="cc-shine"></span></span>'
-        +'<span class="cc-lb">'+item.label+'</span></a>';
-    }).join('');
-    /* 표지 없는 세계관은 기존 텍스트 버튼 스타일 유지 */
-    var texts=noCover.map(function(item){
+    /* 순서 유지: 표지 있으면 카드, 없으면 텍스트 버튼 — 어드민 순서대로 섞여서 출력 */
+    popup.innerHTML=items.map(function(item){
+      if(item.cover){
+        return '<a class="cc-item" href="'+item.url+'">'
+          +'<span class="cc-cover"><img src="'+item.cover+'" alt="'+item.label+' 표지" loading="lazy" onerror="this.style.display=\'none\'">'
+          +'<span class="cc-shine"></span></span>'
+          +'<span class="cc-lb">'+item.label+'</span></a>';
+      }
       return '<a href="'+item.url+'">'+item.label+'</a>';
     }).join('');
-    popup.innerHTML=cards+texts;
     popup.classList.toggle('hrow', withCover.length>0);
     /* 3D 틸트: 커서 위치 따라 카드 기울기 + 광택 */
     popup.querySelectorAll('a.cc-item').forEach(function(card){
