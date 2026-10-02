@@ -157,6 +157,25 @@
       box-shadow: 0 0 10px rgba(47,211,224,0.2);
       transform: translateY(-1px);
     }
+    /* ── 회차별 공유 버튼 ── */
+    .chapter-row { display:flex; gap:6px; align-items:stretch; }
+    .chapter-row .chapter-btn { flex:1 1 auto; width:auto; min-width:0; }
+    .ep-share {
+      border: 1px solid var(--line);
+      background: rgba(5,5,5,0.92);
+      color: var(--muted);
+      flex: 0 0 36px; width: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; padding: 0;
+      transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .ep-share:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(47,211,224,0.10);
+      box-shadow: 0 0 8px rgba(47,211,224,0.2);
+    }
+    .ep-share svg { width: 13px; height: 13px; pointer-events: none; }
+
     .chapter-btn.active {
       border-color: var(--accent);
       background: rgba(47,211,224,0.12);
@@ -462,15 +481,62 @@ function getPageUrl(p){
   return langUrl||p.image_url||'';
 }
 
+/* ── 공유 링크 복사 (회차 직링크) ── */
+function legacyCopy(t){
+  var ta=document.createElement('textarea');
+  ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  ta.parentNode.removeChild(ta);
+}
+var __toastT=null;
+function showToast(msg){
+  var t=document.getElementById('cp-toast');
+  if(!t){
+    t=document.createElement('div'); t.id='cp-toast';
+    t.style.cssText='position:fixed;left:50%;bottom:34px;transform:translate(-50%,10px);'
+      +'z-index:99998;border:1px solid var(--accent);background:rgba(5,5,5,.95);'
+      +'color:var(--text);padding:10px 18px;font-size:.85rem;letter-spacing:.06em;'
+      +'opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  requestAnimationFrame(function(){t.style.opacity='1';t.style.transform='translate(-50%,0)';});
+  clearTimeout(__toastT);
+  __toastT=setTimeout(function(){t.style.opacity='0';t.style.transform='translate(-50%,10px)';},1600);
+}
+function copyEpLink(i){
+  var url=location.origin+location.pathname
+    +(WORLD_PARAM?'?world='+encodeURIComponent(WORLD_PARAM)+'&':'?')+'ep='+(i+1);
+  function done(){ showToast('링크 복사됨!'); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(done,function(){legacyCopy(url);done();});
+  }else{ legacyCopy(url); done(); }
+}
+/* ?ep=N 파라미터로 시작 화 지정 (1-based, 범위 밖이면 0화) */
+function initialEpisode(){
+  var n=parseInt(urlParams.get('ep'),10);
+  return (n>=1&&episodeData.length&&n<=episodeData.length)?(n-1):0;
+}
+
 function renderEpisodeList(episodes){
   episodeData=episodes;
   listEl.innerHTML='';
   episodes.forEach(function(ep,i){
+    var row=document.createElement('div');
+    row.className='chapter-row';
     var btn=document.createElement('button');
     btn.className='chapter-btn'+(i===0?' active':'');
     btn.textContent=ep.label||ep.title;
     btn.addEventListener('click',function(){showEpisode(i);});
-    listEl.appendChild(btn);
+    var cp=document.createElement('button');
+    cp.className='ep-share';
+    cp.title='이 화 링크 복사';
+    cp.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+    cp.addEventListener('click',function(ev){ev.stopPropagation();copyEpLink(i);});
+    row.appendChild(btn);
+    row.appendChild(cp);
+    listEl.appendChild(row);
   });
 }
 
@@ -550,7 +616,7 @@ function getLocalEpisodes(){
 var localEps = getLocalEpisodes();
 if(localEps.length){
   renderEpisodeList(localEps);
-  showEpisode(0);
+  showEpisode(initialEpisode());
 } else {
   viewerTitleEl.textContent='Loading...';
 }
@@ -582,7 +648,7 @@ if(localEps.length){
       };
     });
     renderEpisodeList(converted);
-    showEpisode(0);
+    showEpisode(initialEpisode());
     if(window.__hideBootLoader) window.__hideBootLoader();
   }
 
@@ -594,7 +660,7 @@ if(localEps.length){
         pages:pages.map(function(p){return getPageUrl(p);}) };
     });
     renderEpisodeList(converted);
-    showEpisode(0);
+    showEpisode(initialEpisode());
     if(window.__hideBootLoader) window.__hideBootLoader();
   }
 
@@ -618,7 +684,7 @@ if(localEps.length){
     if(window.__hideBootLoader) window.__hideBootLoader();
   }).catch(function(){
     if(!localEps.length && typeof EPISODES!=='undefined' && EPISODES.length){
-      renderEpisodeList(EPISODES); showEpisode(0);
+      renderEpisodeList(EPISODES); showEpisode(initialEpisode());
     } else if(!localEps.length){
       listEl.innerHTML='<div class="viewer-placeholder" style="padding:20px">LOAD FAILED</div>';
       webtoonStripEl.innerHTML='<div class="viewer-placeholder">SERVER CONNECTION FAILED. PLEASE REFRESH.</div>';
