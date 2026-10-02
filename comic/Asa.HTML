@@ -443,6 +443,18 @@ toggleBtn.addEventListener('click',function(){
 
 /* ── 에피소드 시스템 ── */
 var listEl=document.getElementById('episodeList');
+/* ── EP 목록 하단이 화면 밖으로 가려지는 문제 방지 ──
+   목록 상단의 실제 위치를 잰 뒤, 뷰포트 안에 목록 전체(스크롤바 포함)가
+   들어오도록 높이를 조정. 스크롤 시 사이드바가 고정되면 목록이
+   화면 크기만큼 점점 늘어나 하단 회차까지 항상 보임. */
+function capEpList(){
+  var r=listEl.getBoundingClientRect();
+  var h=window.innerHeight - Math.max(r.top,80);
+  listEl.style.maxHeight=Math.max(160,h)+'px';
+}
+window.addEventListener('scroll',capEpList,{passive:true});
+window.addEventListener('resize',capEpList);
+capEpList();
 var viewerTitleEl=document.getElementById('viewerTitle');
 var webtoonStripEl=document.getElementById('webtoonStrip');
 var langToggleWrap=document.getElementById('langToggleWrap');
