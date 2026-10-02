@@ -302,7 +302,41 @@
     #boot-loader .bl-msg-ko{font-size:.82rem;color:#5ef2ff;letter-spacing:.01em;margin-top:2px;}
     #boot-loader .bl-sub{font-size:.64rem;color:#7aa9b0;margin-top:20px;letter-spacing:.02em;}
 
-      /* ══ 우클릭/드래그 저장 방지 (가벼운 억제) ══ */
+      /* ── Comics 드롭다운: 가로 표지 나열 (2:3, 3D 틸트) ── */
+  .char-popup.hrow { display:none; min-width:0; }
+  .char-popup.hrow.open { display:flex; flex-wrap:wrap; gap:8px; padding:10px; }
+  .char-popup.hrow a.cc-item {
+    flex:0 0 84px; display:block; padding:0; border:1px solid var(--line);
+    background:rgba(94,242,255,.03);
+    transition:border-color .2s, box-shadow .2s, transform .16s ease-out;
+    will-change:transform;
+  }
+  .char-popup.hrow a.cc-item:hover {
+    border-color:var(--accent); background:rgba(94,242,255,.06);
+    box-shadow:0 0 12px rgba(47,211,224,.25);
+  }
+  /* 표지 없는 세계관: 기존 텍스트 버튼 스타일 유지 */
+  .char-popup.hrow a:not(.cc-item) { flex:0 0 auto; align-self:center; }
+  .cc-cover {
+    position:relative; display:flex; width:100%; aspect-ratio:2/3;
+    align-items:center; justify-content:center; overflow:hidden;
+  }
+  .cc-cover img { width:100%; height:100%; object-fit:cover; display:block; }
+  .cc-shine {
+    position:absolute; inset:0; pointer-events:none; mix-blend-mode:screen;
+    opacity:0; transition:opacity .25s;
+  }
+  .cc-lb {
+    display:block; text-align:center; font-size:.68rem; padding:5px 2px 7px; color:var(--text);
+  }
+  .cc-item:hover .cc-lb { color:#fff; }
+  /* 좁은 화면: 표지 카드가 줄바꿈되며 화면 밖으로 나가지 않게 */
+  @media (max-width:520px){
+    .char-popup.hrow.open { max-width:calc(100vw - 20px); }
+    .char-popup.hrow a.cc-item { flex:1 1 74px; max-width:84px; }
+  }
+
+/* ══ 우클릭/드래그 저장 방지 (가벼운 억제) ══ */
     img{ -webkit-user-drag:none; user-drag:none; -webkit-touch-callout:none; }
 
   </style>
@@ -810,22 +844,53 @@ function playGlitchSound(){
   var COMIC_BASE='comic/Asa.HTML';
 
   function renderComicDropdown(items){
-    popup.innerHTML=items.map(function(item){
+    var withCover=items.filter(function(it){return it.cover;});
+    var noCover =items.filter(function(it){return !it.cover;});
+    var cards=withCover.map(function(item){
+      return '<a class="cc-item" href="'+item.url+'">'
+        +'<span class="cc-cover"><img src="'+item.cover+'" alt="'+item.label+' 표지" loading="lazy" onerror="this.style.display=\'none\'">'
+        +'<span class="cc-shine"></span></span>'
+        +'<span class="cc-lb">'+item.label+'</span></a>';
+    }).join('');
+    /* 표지 없는 세계관은 기존 텍스트 버튼 스타일 유지 */
+    var texts=noCover.map(function(item){
       return '<a href="'+item.url+'">'+item.label+'</a>';
     }).join('');
+    popup.innerHTML=cards+texts;
+    popup.classList.toggle('hrow', withCover.length>0);
+    /* 3D 틸트: 커서 위치 따라 카드 기울기 + 광택 */
+    popup.querySelectorAll('a.cc-item').forEach(function(card){
+      card.addEventListener('mousemove', function(e){
+        var r=card.getBoundingClientRect();
+        var px=(e.clientX-r.left)/r.width-.5, py=(e.clientY-r.top)/r.height-.5;
+        card.style.transform='perspective(420px) rotateX('+(-py*18).toFixed(2)+'deg) rotateY('+(px*18).toFixed(2)+'deg) translateZ(8px)';
+        card.style.boxShadow='0 0 16px rgba(47,211,224,.4)';
+        var sh=card.querySelector('.cc-shine');
+        if(sh){ sh.style.opacity=.55;
+          sh.style.background='radial-gradient(circle at '+(((px+.5)*100).toFixed(1))+'% '+(((py+.5)*100).toFixed(1))+'%, rgba(255,255,255,.6) 0%, rgba(255,255,255,0) 55%)'; }
+      });
+      card.addEventListener('mouseleave', function(){
+        card.style.transform='';
+        card.style.boxShadow='';
+        var sh=card.querySelector('.cc-shine');
+        if(sh) sh.style.opacity=0;
+      });
+    });
   }
 
   /* API에서 세계관 목록 가져오기 */
   fetch(API+'/api/worlds').then(function(r){return r.json();}).then(function(worlds){
     if(!worlds||!worlds.length){
-      renderComicDropdown(buildComicWorldList());
+      var fbList=buildComicWorldList();
+      renderComicDropdown(fbList.map(function(it){ return {label:it.label,url:it.url,cover:''}; }));
       return;
     }
     renderComicDropdown(worlds.map(function(w){
-      return {label:w.name, url:COMIC_BASE+'?world='+encodeURIComponent(w.name)};
+      return {label:w.name, url:COMIC_BASE+'?world='+encodeURIComponent(w.name), cover:(w.cover_url||'')};
     }));
   }).catch(function(){
-    renderComicDropdown(buildComicWorldList());
+    var fbList=buildComicWorldList();
+    renderComicDropdown(fbList.map(function(it){ return {label:it.label,url:it.url,cover:''}; }));
   }).finally(function(){
     if(window.__bootFetchDone) window.__bootFetchDone();
   });

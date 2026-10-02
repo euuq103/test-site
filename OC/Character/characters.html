@@ -386,6 +386,41 @@ var WORLD_THEME={
   '砂月':     {accent:'#b8a9c9', rgb:'184,169,201', hi:'#e6ddf0', text:'#d9cde8', muted:'#9a8fae', line:'#2b2535'},
   'asa!':    {accent:'#ff7a6e', rgb:'255,122,110', hi:'#ffd7d2', text:'#ffb3ab', muted:'#b07970', line:'#3a2220'}
 };
+/* 어드민에서 지정한 테마 색(hex) → 파생 팔레트 자동 생성 */
+var DB_THEMES = {};   /* world_name(소문자) -> hex, /api/characters에서 채움 */
+var WORLD_ALIAS = {}; /* 별칭(소문자) -> world_name(소문자), 옛 ?world= 링크 지원 */
+function hexToRgb(h){
+  h=h.replace('#',''); if(h.length===3) h=h.split('').map(function(c){return c+c;}).join('');
+  var n=parseInt(h,16); return [(n>>16)&255,(n>>8)&255,n&255];
+}
+function rgbToHsl(r,g,b){
+  r/=255; g/=255; b/=255;
+  var mx=Math.max(r,g,b), mn=Math.min(r,g,b), h=0, s=0, l=(mx+mn)/2;
+  if(mx!==mn){ var d=mx-mn;
+    s = l>0.5 ? d/(2-mx-mn) : d/(mx+mn);
+    switch(mx){ case r: h=(g-b)/d+(g<b?6:0); break; case g: h=(b-r)/d+2; break; default: h=(r-g)/d+4; }
+    h/=6;
+  }
+  return [h,s,l];
+}
+function hslToHex(h,s,l){
+  var f=function(n){ var k=(n+h*12)%12, a=s*Math.min(l,1-l);
+    var v=l-a*Math.max(-1,Math.min(k-3,Math.min(9-k,1)));
+    return Math.round(v*255).toString(16).padStart(2,'0'); };
+  return '#'+f(0)+f(8)+f(4);
+}
+function deriveTheme(hex){
+  var rgb=hexToRgb(hex), hsl=rgbToHsl(rgb[0],rgb[1],rgb[2]);
+  var H=hsl[0];
+  return {
+    accent: hex,
+    rgb: rgb.join(','),
+    hi:   hslToHex(H, Math.min(hsl[1]*0.8, 0.9), 0.89),
+    text: hslToHex(H, hsl[1], Math.min(hsl[2]+0.18, 0.85)),
+    muted: hslToHex(H, Math.min(hsl[1]*0.45, 0.5), 0.60),
+    line:  hslToHex(H, Math.min(hsl[1]*0.9, 0.8), 0.16)
+  };
+}
 function applyWorldTheme(t){
   var r=document.documentElement.style;
   r.setProperty('--accent',t.accent);
@@ -538,11 +573,13 @@ function buildFromData(db){
        표시하므로 별도 selectItem 호출은 불필요 — 캐릭터 목록(썸네일)의
        active 표시를 인덱스로 재계산해 엉뚱한 캐릭터를 켜던 버그였음. 제거함. */
   } else {
-    /* URL ?world= param: case-insensitive match */
+    /* URL ?world= param: case-insensitive match (별칭/옛 이름도 매칭) */
     var targetWorld = null;
     if(WORLD_PARAM){
+      var wp = WORLD_PARAM.toLowerCase();
+      if(WORLD_ALIAS[wp]) wp = WORLD_ALIAS[wp];   /* 옛 이름 → 현재 이름 */
       WORLD_ORDER.forEach(function(w){
-        if(w.toLowerCase() === WORLD_PARAM.toLowerCase()) targetWorld = w;
+        if(w.toLowerCase() === wp) targetWorld = w;
       });
     }
     activateWorld(targetWorld || WORLD_ORDER[0]);
@@ -554,8 +591,10 @@ function activateWorld(wLabel){
   charNav.querySelectorAll('.world-nav-btn').forEach(function(b){
     b.classList.toggle('active', b.dataset.world === wLabel);
   });
-  /* 세계관별 테마 전환: UI 포인트색 + 파티클 (부드럽게 페이드) */
-  var t=WORLD_THEME[String(wLabel||'').toLowerCase()]||WORLD_THEME.trench;
+  /* 세계관별 테마 전환: 어드민 지정 색 우선 → 기존 4색 → 기본 시안 */
+  var wk=String(wLabel||'').toLowerCase();
+  var t = DB_THEMES[wk] ? deriveTheme(DB_THEMES[wk])
+         : (WORLD_THEME[wk] || WORLD_THEME.trench);
   applyWorldTheme(t);
   if(window.setParticleRGB) setParticleRGB(t.rgb);
   pageTitle.textContent = wLabel; // top title = world name
@@ -623,6 +662,11 @@ fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(a
   var db = {};
   apiData.forEach(function(worldGroup){
     var wName = worldGroup.world_name || 'Unknown';
+    /* 어드민 지정 테마 색 / 별칭 수집 */
+    if(worldGroup.theme_color) DB_THEMES[wName.toLowerCase()] = worldGroup.theme_color;
+    (worldGroup.world_alias||'').split(',').forEach(function(a){
+      a=a.trim(); if(a) WORLD_ALIAS[a.toLowerCase()] = wName.toLowerCase();
+    });
     (worldGroup.characters||[]).forEach(function(ch){
       var key = 'char_'+ch.id;
       db[key] = {

@@ -351,7 +351,9 @@ var WORLD_PARAM = urlParams.get('world') || '';
   function r(){c.width=window.innerWidth;c.height=window.innerHeight;}r();
   window.addEventListener('resize',r);
   var dots=Array.from({length:60},function(){return{x:Math.random()*2000,y:Math.random()*1200,r:Math.random()*1.4+.3,dx:(Math.random()-.5)*.25,dy:(Math.random()-.5)*.25,a:Math.random()*.5+.1};});
-  function draw(){ctx.clearRect(0,0,c.width,c.height);dots.forEach(function(d){ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(94,242,255,'+d.a+')';ctx.fill();d.x+=d.dx;d.y+=d.dy;if(d.x<0)d.x=c.width;if(d.x>c.width)d.x=0;if(d.y<0)d.y=c.height;if(d.y>c.height)d.y=0;});requestAnimationFrame(draw);}
+  var P_RGB='94,242,255'; /* 세계관별 파티클 색 (기본: 시안) */
+  window.setParticleRGB=function(v){P_RGB=v;};
+  function draw(){ctx.clearRect(0,0,c.width,c.height);dots.forEach(function(d){ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba('+P_RGB+','+d.a+')';ctx.fill();d.x+=d.dx;d.y+=d.dy;if(d.x<0)d.x=c.width;if(d.x>c.width)d.x=0;if(d.y<0)d.y=c.height;if(d.y>c.height)d.y=0;});requestAnimationFrame(draw);}
   draw();
 })();
 
@@ -511,6 +513,30 @@ if(WORLD_PARAM){
   if(worldTitle) worldTitle.textContent = WORLD_PARAM;
   if(navWorldLabel) navWorldLabel.textContent = WORLD_PARAM + ' — EP';
 }
+/* 세계관별 파티클 색 (로드 시 1회, 알 수 없는 세계관은 시안 유지) */
+(function(){
+  var WORLD_RGB={'trench':'94,242,255','heaven':'212,175,55','砂月':'184,169,201','asa!':'255,122,110'};
+  if(window.setParticleRGB) setParticleRGB(WORLD_RGB[String(WORLD_PARAM||'').toLowerCase()]||'94,242,255');
+})();
+/* 어드민에서 지정한 테마 색이 있으면 그 색으로 (없으면 위 기본 맵 유지, 자동화) */
+(function(){
+  try{
+    fetch(API+'/api/worlds').then(function(r){return r.json();}).then(function(ws){
+      var wp=String(WORLD_PARAM||'').trim().toLowerCase();
+      (ws||[]).forEach(function(w){
+        var names=[w.name].concat((w.alias||'').split(','))
+          .map(function(x){return (x||'').trim().toLowerCase();}).filter(Boolean);
+        if(names.indexOf(wp)>-1 && w.theme_color){
+          var h=w.theme_color.replace('#','');
+          if(h.length===3) h=h.split('').map(function(c){return c+c;}).join('');
+          var n=parseInt(h,16);
+          if(!isNaN(n) && window.setParticleRGB)
+            setParticleRGB(((n>>16)&255)+','+((n>>8)&255)+','+(n&255));
+        }
+      });
+    }).catch(function(){});
+  }catch(e){}
+})();
 
 /* 로컬 fallback: 세계관 필터 */
 function getLocalEpisodes(){
