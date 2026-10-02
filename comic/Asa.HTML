@@ -146,6 +146,14 @@
     }
     /* 회차가 많아져도 목록이 화면보다 길어지면 내부 스크롤 (데스크톱/모바일 공통) */
     #episodeList { max-height: calc(100vh - 130px); overflow-y: auto; }
+    /* ── EP 목록 스크롤바: 테마 커스텀(기본 브라우저 스타일 대체) ── */
+    #episodeList { scrollbar-width: thin; scrollbar-color: rgba(47,211,224,0.28) transparent; }
+    #episodeList::-webkit-scrollbar { width: 5px; }
+    #episodeList::-webkit-scrollbar-track { background: transparent; }
+    #episodeList::-webkit-scrollbar-thumb {
+      background: rgba(47,211,224,0.28); border-radius: 3px;
+    }
+    #episodeList::-webkit-scrollbar-thumb:hover { background: rgba(47,211,224,0.55); }
     .comic-layout.sidebar-hidden .sidebar {
       opacity: 0; pointer-events: none;
     }
