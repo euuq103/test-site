@@ -22,6 +22,7 @@
       --line: #17353a;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scrollbar-gutter: stable; } /* 스크롤바 공간 고정 — 짧은 페이지(빈 세계관)에서 토글해도 레이아웃 밀림 방지 */
     body {
       min-height: 100vh;
       font-family: Arial, Helvetica, sans-serif;
@@ -103,6 +104,25 @@
       margin-bottom: 10px;
     }
     .char-nav-list { display: grid; gap: 7px; }
+
+/* ── World 블럭 접기 토글: 0개(접힘) ↔ 전체(펼침), 화살표는 항상 표시 ── */
+.sidebar-label-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.sidebar-label-row .sidebar-label { margin-bottom:0; }
+.wnav-toggle {
+  background:none; border:1px solid var(--line); color:var(--muted);
+  font-size:.6rem; padding:2px 7px; cursor:pointer; line-height:1.4;
+  transition:color .15s, border-color .15s;
+}
+.wnav-toggle:hover { color:var(--accent); border-color:var(--accent); }
+.wnav-wrap { overflow:hidden; transition:max-height .3s ease; }
+.wnav-wrap.no-anim { transition:none; }
+.wnav-more {
+  display:block; width:100%; text-align:center;
+  background:none; border:none; color:var(--muted);
+  font-size:.7rem; letter-spacing:.1em; padding:6px 0 2px;
+  cursor:pointer; transition:color .15s;
+}
+.wnav-more:hover { color:var(--accent); }
     .world-nav-btn {
       display: block; width: 100%; text-align: left;
       padding: 8px 10px; margin-bottom: 4px;
@@ -332,8 +352,14 @@ document.addEventListener('dragstart', function(e){
   <div class="layout" id="charLayout">
     <aside class="sidebar">
       <div class="sidebar-block">
-        <div class="sidebar-label">World</div>
-        <div class="char-nav-list" id="charNav"></div>
+        <div class="sidebar-label-row">
+          <div class="sidebar-label">World</div>
+          <button class="wnav-toggle" id="wnavToggle" title="세계관 목록 접기/펼치기" style="display:none">▼</button>
+        </div>
+        <div class="wnav-wrap" id="wnavWrap">
+          <div class="char-nav-list" id="charNav"></div>
+        </div>
+        <button class="wnav-more" id="wnavMore" style="display:none">… 더보기</button>
       </div>
       <div class="sidebar-block">
         <div class="sidebar-label">Profile</div>
@@ -461,6 +487,40 @@ toggleBtn.addEventListener('click',function(){
 
 /* ── */
 var charNav=document.getElementById('charNav');
+var wnavToggle=document.getElementById('wnavToggle');
+var wnavWrap=document.getElementById('wnavWrap');
+var wnavMore=document.getElementById('wnavMore');
+/* World 블럭 접기: 화살표/더보기는 세계관이 있으면 항상, 기본값 6개 이하=펼침/7개+=접힘 */
+var WNAV_THRESHOLD=6, wnavOpen=false, wnavInit=false;
+var wnavTo=null;
+/* 2단계: 0개(접힘) ↔ 전체(펼침). 화살표는 세계관이 있으면 항상 표시,
+   기본값: 6개 이하=펼침(현 UI 그대로), 7개부터=접힘 */
+
+function wnavBtns(){ return charNav.querySelectorAll('.world-nav-btn'); }
+function updateWnav(noAnim){
+  var n=wnavBtns().length;
+  if(!wnavInit){ wnavOpen = !(n>WNAV_THRESHOLD); wnavInit=true; }
+  wnavToggle.style.display = n?'':'none';
+  wnavToggle.textContent='▼'; /* 항상 아래 방향 */
+  wnavMore.style.display = n?'':'none';
+  wnavMore.textContent = wnavOpen ? '접기' : '… 더보기';
+  wnavWrap.classList.toggle('no-anim', !!noAnim);
+  wnavWrap.style.maxHeight=(wnavOpen?charNav.scrollHeight:0)+'px';
+  /* 펼침: 슬라이드 후 max-height 고정 해제(이후 높이 변화 대응) */
+  clearTimeout(wnavTo);
+  if(wnavOpen) wnavTo=setTimeout(function(){ if(wnavOpen) wnavWrap.style.maxHeight='none'; },320);
+}
+function setWnav(open){
+  wnavOpen=open;
+  if(open){
+    updateWnav(false);
+  }else{
+    wnavWrap.style.maxHeight=charNav.scrollHeight+'px'; /* none→px 옮겨담기 */
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ updateWnav(false); }); });
+  }
+}
+wnavToggle.addEventListener('click', function(){ setWnav(!wnavOpen); });
+wnavMore.addEventListener('click', function(){ setWnav(!wnavOpen); });
 var thumbList=document.getElementById('thumbList');
 var mainImage=document.getElementById('mainImage');
 var lightbox=document.getElementById('lightbox');
@@ -559,6 +619,7 @@ function buildFromData(db){
       activateWorld(btn.dataset.world); // activateWorld updates pageTitle too
     });
   });
+  updateWnav(true);
 
   /* */
   var params    = new URLSearchParams(location.search);
@@ -584,6 +645,8 @@ function buildFromData(db){
     }
     activateWorld(targetWorld || WORLD_ORDER[0]);
   }
+  /* ?world= / 캐릭터 직링크로 진입한 경우 접힌 목록 자동 펼침 (active 표시 노출) */
+  if((charParam || WORLD_PARAM) && !wnavOpen) setWnav(true);
 }
 
 /* */
@@ -606,7 +669,9 @@ function activateWorld(wLabel){
 
 /* PROFILE */
 function loadWorldChars(wLabel){
-  var keys = WORLD_GROUPS[wLabel] || [];
+  var keys = (WORLD_GROUPS[wLabel] || []).filter(function(k){
+    var it = CHAR_DB[k]; return it && it.items && it.items.length;
+  });
   thumbList.innerHTML = keys.map(function(key, i){
     var item = CHAR_DB[key];
     // thumb: from items[0].thumb OR items[0].image
@@ -667,7 +732,12 @@ fetch(API+'/api/characters').then(function(r){return r.json();}).then(function(a
     (worldGroup.world_alias||'').split(',').forEach(function(a){
       a=a.trim(); if(a) WORLD_ALIAS[a.toLowerCase()] = wName.toLowerCase();
     });
-    (worldGroup.characters||[]).forEach(function(ch){
+    var chs = worldGroup.characters||[];
+    if(!chs.length){
+      /* 캐릭터가 없는 세계관도 버튼에는 표시 (빈 그룹, 썸네일은 비움) */
+      db['wgroup_'+wName] = { world: wName, title: wName, items: [] };
+    }
+    chs.forEach(function(ch){
       var key = 'char_'+ch.id;
       db[key] = {
         world: wName,
