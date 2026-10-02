@@ -14,6 +14,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Asa! — Comic</title>
   <link rel="icon" type="image/png" href="../img/favicon.png" />
+  <!-- 공유 카드 (og): "Asa!" 대신 표시될 제목/이미지 -->
+  <meta property="og:title" content="LAWREN103 — comic" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://lawren103.com/comic/Asa.HTML" />
+  <meta property="og:image" content="https://test-site-f14v.onrender.com/api/og-image" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LAWREN103 — comic" />
+  <meta name="twitter:image" content="https://test-site-f14v.onrender.com/api/og-image" />
   <style>
     :root {
       --bg: #020202;
@@ -506,7 +514,8 @@ function showToast(msg){
   __toastT=setTimeout(function(){t.style.opacity='0';t.style.transform='translate(-50%,10px)';},1600);
 }
 function copyEpLink(i){
-  var url=location.origin+location.pathname
+  /* 백엔드 공유 카드 링크: 메신저에 회차 제목+표지가 뜨고, 열면 만화 페이지로 자동 이동 */
+  var url='https://test-site-f14v.onrender.com/share'
     +(WORLD_PARAM?'?world='+encodeURIComponent(WORLD_PARAM)+'&':'?')+'ep='+(i+1);
   function done(){ showToast('링크 복사됨!'); }
   if(navigator.clipboard&&navigator.clipboard.writeText){
