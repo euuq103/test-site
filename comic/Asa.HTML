@@ -141,7 +141,11 @@
       display: flex; flex-direction: column; gap: 8px;
       overflow: hidden;
       transition: opacity 0.3s ease;
+      /* 스크롤해도 목록이 화면에 계속 보이게 (상단 고정바 아래) */
+      position: sticky; top: 80px;
     }
+    /* 회차가 많아져도 목록이 화면보다 길어지면 내부 스크롤 (데스크톱/모바일 공통) */
+    #episodeList { max-height: calc(100vh - 130px); overflow-y: auto; }
     .comic-layout.sidebar-hidden .sidebar {
       opacity: 0; pointer-events: none;
     }

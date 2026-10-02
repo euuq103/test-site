@@ -339,6 +339,7 @@
   }
   .cc-lb {
     display:block; text-align:center; font-size:.68rem; padding:5px 2px 7px; color:var(--text);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   .cc-item:hover .cc-lb { color:#fff; }
   /* 좁은 화면: 표지 카드가 줄바꿈되며 화면 밖으로 나가지 않게 */
@@ -925,11 +926,13 @@ function playGlitchSound(){
     popup.style.left=left+'px';
     popup.style.top=(r.bottom+4)+'px';
   }
-  function closeP(){timer=setTimeout(function(){popup.classList.remove('open');},280);}
-  wrap.addEventListener('mouseenter',openP);
-  wrap.addEventListener('mouseleave',closeP);
-  popup.addEventListener('mouseenter',openP);
-  popup.addEventListener('mouseleave',closeP);
+  /* 터치 기기: 팝업 바깥 탭하면 닫기 (hover leave가 없으므로) */
+  document.addEventListener('click',function(e){
+    if(popup.classList.contains('open') && !popup.contains(e.target) && !wrap.contains(e.target)){
+      clearTimeout(timer);
+      popup.classList.remove('open');
+    }
+  });
 })();
 
 /* ── 버튼 리플 ── */
