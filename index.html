@@ -13,6 +13,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lawren103</title>
+
+  <!-- ── 공유 썸네일 (자동: 어드민 표지 변경 시 /api/og-image가 자동 반영) ── -->
+  <meta property="og:title" content="LAWREN103" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://lawren103.com/" />
+  <meta property="og:image" content="https://test-site-f14v.onrender.com/api/og-image" />
+  <meta property="og:image:alt" content="LAWREN103" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="LAWREN103" />
+  <meta name="twitter:image" content="https://test-site-f14v.onrender.com/api/og-image" />
+
   <link rel="icon" type="image/png" href="img/favicon.png" />
   <script src="characters.js"></script>
   <script src="comics.js"></script>
@@ -907,9 +918,12 @@ function playGlitchSound(){
   function openP(){
     clearTimeout(timer);
     var r=wrap.getBoundingClientRect();
-    popup.style.left=r.left+'px';
-    popup.style.top=(r.bottom+4)+'px';
     popup.classList.add('open');
+    /* 열린 뒤 실측 폭으로 화면 오른쪽 넘침 방지 (모바일 대응) */
+    var pw=popup.offsetWidth||380;
+    var left=Math.max(8,Math.min(r.left,window.innerWidth-pw-10));
+    popup.style.left=left+'px';
+    popup.style.top=(r.bottom+4)+'px';
   }
   function closeP(){timer=setTimeout(function(){popup.classList.remove('open');},280);}
   wrap.addEventListener('mouseenter',openP);
